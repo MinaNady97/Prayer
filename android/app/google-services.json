@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "763563141351",
+    "project_id": "prayer-22018",
+    "storage_bucket": "prayer-22018.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:763563141351:android:4d35a694ae2d5621a69a42",
+        "android_client_info": {
+          "package_name": "u3.samet.sametsalah"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMZPk5CHaP7DGRvvnMrJrim4SAwVp7ofA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
