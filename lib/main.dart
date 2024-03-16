@@ -73,8 +73,8 @@ List findClosestPrayerTime() {
   controller.prayertime.forEach((key, value) {
     final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
         .parse('${now.year}-${now.month}-${now.day} $value');
-    final timeDiffInMinutes = now.difference(prayerTime).inMinutes;
-
+    final timeDiffInMinutes = -(now.difference(prayerTime).inMinutes);
+    //print(timeDiffInMinutes);
     // Check if prayer time is in the future (positive difference)
     if (timeDiffInMinutes > 0 && timeDiffInMinutes < closestDiffInMinutes) {
       closestKey = key;
