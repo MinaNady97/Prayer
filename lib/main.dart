@@ -31,7 +31,7 @@ Future<void> main() async {
 
 String? getKeyFromValue(Map<String, String> map, String value) {
   for (var entry in map.entries) {
-    if (entry.value == value) {
+    if (entry.value.trim() == value.trim()) {
       return entry.key;
     }
   }
@@ -90,7 +90,7 @@ List findClosestPrayerTime() {
 }
 
 @pragma('vm:entry-point')
-void onstart(ServiceInstance service) async {z
+void onstart(ServiceInstance service) async {
   service.on('stopService').listen((event) async {
     await service.stopSelf();
     controller.enable_sound();
@@ -99,7 +99,7 @@ void onstart(ServiceInstance service) async {z
   String aftertime = "";
   List closest_prayer_time = findClosestPrayerTime();
   Timer.periodic(
-    const Duration(seconds: 60),
+    const Duration(seconds: 30),
     (timer) async {
       var now = DateTime.now();
       String currentTime =
@@ -121,9 +121,10 @@ void onstart(ServiceInstance service) async {z
       //   print("eroor");
       // }
       //print(flag);
-      if (key == null) {
-        print('The key for the value is: null');
-      } else if (key != null && flag == true) {
+      // if (key == null) {
+      //   print('The key for the value is: null');
+      // }
+      if (key != null && flag == true) {
         print('The key for the value is: $key');
 
         controller.checkLocation();
