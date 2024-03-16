@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
@@ -7,7 +9,9 @@ import 'package:get/get.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:sametsalah/controller.dart';
-
+import 'package:sametsalah/fbnotify.dart';
+import 'package:sametsalah/firebase_options.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'login.dart';
 
 late var service;
@@ -15,11 +19,21 @@ final MainController controller = Get.put(MainController());
 late var isRunning;
 List<String> prayerTimes = List.filled(5, '');
 List<String> _prayertimes = [];
+List<QueryDocumentSnapshot> constants = [];
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeService();
-
+  constants = controller.constants;
   runApp(MyApp());
+}
+
+String? getKeyFromValue(Map<String, String> map, String value) {
+  for (var entry in map.entries) {
+    if (entry.value == value) {
+      return entry.key;
+    }
+  }
+  return null;
 }
 
 Future<void> initializeService() async {
@@ -55,14 +69,13 @@ void onstart(ServiceInstance service) async {
     controller.enable_sound();
   });
   bool flag = true;
+  String aftertime = "";
   Timer.periodic(
-    const Duration(seconds: 1),
+    const Duration(seconds: 30),
     (timer) async {
       var now = DateTime.now();
       String currentTime =
           '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-      String aftertime =
-          '${now.hour.toString().padLeft(2, '0')}:${(now.minute - 15).toString().padLeft(2, '0')}';
       //print(controller.prayertime[0]);
       //print(currentTime);
       String formattedDate_now =
@@ -70,11 +83,26 @@ void onstart(ServiceInstance service) async {
       if (controller.formattedDate != formattedDate_now) {
         controller.fetchPrayerTimings();
       }
-      print(controller.prayertime[0].contains(currentTime));
-      if (controller.prayertime[0].contains(currentTime) && flag) {
+      //print(controller.prayertime[0].contains(currentTime));
+      String? key = getKeyFromValue(controller.prayertime, currentTime);
+      //String key = "Fajr";
+      print(controller.prayertime['Fajr']);
+      if (key == null) {
+        // print('The key for the value is: null');
+        // print(controller.constants[0]["user_name"]);
+        // print("your lat is " + controller.constants[0]["coordinates"]["lat"]);
+        // print("your long is " + controller.constants[0]["coordinates"]["long"]);
+      } else if (key != null && flag == true) {
+        print('The key for the value is: $key');
         controller.checkLocation();
         flag = false;
-      } else if (controller.prayertime[0].contains(aftertime)) {
+        try {
+          aftertime =
+              '${now.hour.toString().padLeft(2, '0')}:${(now.minute + constants[0]["times"][key]).toString().padLeft(2, '0')}';
+        } catch (e) {
+          ;
+        }
+      } else if (currentTime == aftertime) {
         controller.enable_sound();
         flag = true;
       }
@@ -154,11 +182,15 @@ class MyApp extends StatelessWidget {
                     ),
                   ),
                   InkWell(
-                      onTap: ()
-                      {
-                       Get.to(LoginPage());
+                      onTap: () {
+                        Get.to(LoginPage(), arguments: constants);
                       },
-                      child: ListTile(title:Text("Login As Admin"),trailing: Icon(Icons.manage_accounts_rounded,),))
+                      child: ListTile(
+                        title: Text("Login As Admin"),
+                        trailing: Icon(
+                          Icons.manage_accounts_rounded,
+                        ),
+                      ))
                 ],
               ),
             ),

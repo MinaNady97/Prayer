@@ -1,42 +1,56 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'manage.dart';
-abstract class LoginController extends GetxController
-{
-}
-class LoginControllerImp extends LoginController
-{
+
+abstract class LoginController extends GetxController {}
+
+class LoginControllerImp extends LoginController {
   late TextEditingController email;
   late TextEditingController password;
-  bool isshowpass=true;
-  showpass()
-  {
-    isshowpass=isshowpass==true?false:true;
+  bool isshowpass = true;
+  List<QueryDocumentSnapshot> constants = [];
+
+  showpass() {
+    isshowpass = isshowpass == true ? false : true;
     update();
   }
-  GlobalKey<FormState> formstate=GlobalKey<FormState>();
-  loginfirebase()async
-  {
 
-  }
+  GlobalKey<FormState> formstate = GlobalKey<FormState>();
+  loginfirebase() async {}
   @override
-  void onInit() async{
-    email=TextEditingController();
-    password=TextEditingController();
-    email.text="";
-    password.text="";
+  void onInit() async {
+    constants = Get.arguments;
+    email = TextEditingController();
+    password = TextEditingController();
+    email.text = "";
+    password.text = "";
     super.onInit();
   }
-  login()async
-  {
+
+  login() async {
+    var user_name_DB = constants[0]["user_name"];
+    var password_DB = constants[0]["password"];
+
     if (formstate.currentState!.validate()) {
-       if(email.text=="shehap"&&password.text=="123456")
-       {
-        Get.off(ManagePage());
-       }
-      }}
-@override
+      if (email.text.trim() == user_name_DB &&
+          password.text.trim() == password_DB) {
+        Get.off(ManagePage(), arguments: constants);
+      } else {
+        Get.snackbar(
+          'Alert', // Title of the snackbar
+          'user name or password not is wrong', // Message of the snackbar
+          snackPosition: SnackPosition.BOTTOM, // Position of the snackbar
+          backgroundColor: Colors.grey[800], // Background color of the snackbar
+          colorText: Colors.white, // Text color of the snackbar
+          duration: Duration(seconds: 3),
+        );
+      }
+    }
+  }
+
+  @override
   void dispose() {
     email.dispose();
     password.dispose();
