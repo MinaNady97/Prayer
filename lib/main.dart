@@ -90,7 +90,7 @@ List findClosestPrayerTime() {
 }
 
 @pragma('vm:entry-point')
-void onstart(ServiceInstance service) async {
+void onstart(ServiceInstance service) async {z
   service.on('stopService').listen((event) async {
     await service.stopSelf();
     controller.enable_sound();
