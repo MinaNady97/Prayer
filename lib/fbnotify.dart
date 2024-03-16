@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 
-requestPermissionNotification() async {
+Future<void> requestPermissionNotification() async {
   NotificationSettings settings =
       await FirebaseMessaging.instance.requestPermission(
     alert: true,

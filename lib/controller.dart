@@ -45,19 +45,23 @@ class MainController extends GetxController {
 
     FirebaseMessaging.instance.subscribeToTopic("users");
 
-    requestPermissionNotification();
+    await requestPermissionNotification();
     fcmcofing();
     await get_times_from_DB();
-    _requestLocationPermission();
-    _requestnotifyPermission();
-    fetchPrayerTimings();
+    await _requestLocationPermission();
+    await _requestnotifyPermission();
+    await fetchPrayerTimings();
     get_location();
   }
 
-  Future<Position> get_location() async {
-    Position _position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.best);
-    return _position;
+  Future<Position?> get_location() async {
+    try {
+      Position _position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.best);
+      return _position;
+    } catch (e) {
+      return null;
+    }
   }
 
   void change_service_statu(bool value) {
@@ -75,12 +79,15 @@ class MainController extends GetxController {
     final DateTime now = DateTime.now();
     formattedDate =
         '${addLeadingZero(now.day)}-${addLeadingZero(now.month)}-${now.year}';
+    // var url = 'https://api.aladhan.com/v1/timings/' +
+    //     formattedDate +
+    //     '?latitude=' +
+    //     position.latitude.toString() +
+    //     '&longitude=' +
+    //     position.longitude.toString(); ##########url for public app later
     var url = 'https://api.aladhan.com/v1/timings/' +
         formattedDate +
-        '?latitude=' +
-        position.latitude.toString() +
-        '&longitude=' +
-        position.longitude.toString();
+        '?latitude=30.508188279926383&longitude=-97.79224473202267&tune=0,0,0,0,0,0,0,0,0';
     print(url);
     final response = await http.get(Uri.parse(url));
     print(response);

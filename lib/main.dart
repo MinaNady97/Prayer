@@ -247,12 +247,15 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
     final DateTime now = DateTime.now();
     final String formattedDate =
         '${_addLeadingZero(now.day)}-${_addLeadingZero(now.month)}-${now.year}';
+    // var url = 'https://api.aladhan.com/v1/timings/' +
+    //     formattedDate +
+    //     '?latitude=' +
+    //     position!.latitude.toString() +
+    //     '&longitude=' +
+    //     position!.longitude.toString();
     var url = 'https://api.aladhan.com/v1/timings/' +
         formattedDate +
-        '?latitude=' +
-        position.latitude.toString() +
-        '&longitude=' +
-        position.longitude.toString();
+        '?latitude=30.508188279926383&longitude=-97.79224473202267&tune=0,0,0,0,0,0,0,0,0';
     print(url);
     final response = await http.get(Uri.parse(url));
     print(response);
