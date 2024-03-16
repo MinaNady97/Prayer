@@ -20,11 +20,11 @@ class MainController extends GetxController {
   List<QueryDocumentSnapshot> constants = [];
   List<QueryDocumentSnapshot> coordinates = [];
   Map<String, String> prayertime = {
-    'Fajr': "0",
-    'Dhuhr': "0",
-    'Asr': "0",
-    'Maghrib': "0",
-    'Isha': "0",
+    'Fajr': "00:00",
+    'Dhuhr': "00:00",
+    'Asr': "00:00",
+    'Maghrib': "00:00",
+    'Isha': "00:00",
   };
   String formattedDate = "";
   String targetLatitude = "";
@@ -46,12 +46,13 @@ class MainController extends GetxController {
     FirebaseMessaging.instance.subscribeToTopic("users");
 
     await requestPermissionNotification();
-    fcmcofing();
-    await get_times_from_DB();
     await _requestLocationPermission();
     await _requestnotifyPermission();
+    fcmcofing();
+    await get_times_from_DB();
+
     await fetchPrayerTimings();
-    get_location();
+    //get_location();
   }
 
   Future<Position?> get_location() async {
@@ -139,9 +140,8 @@ class MainController extends GetxController {
 
   void checkLocation() async {
     try {
-      print(coordinates[0]["lat"]);
+      //print(coordinates[0]["lat"]);
       for (var location in coordinates) {
-        print("here");
         targetLatitude = location["lat"];
         targetLongitude = location["long"];
         Position position = await Geolocator.getCurrentPosition(
@@ -160,13 +160,13 @@ class MainController extends GetxController {
           }
           print("up");
 // Mute audio
-        } else {
-          try {
-            await SoundMode.setSoundMode(RingerModeStatus.normal);
-          } on PlatformException {
-            print('Please enable permissions required');
-          }
-          print("down");
+          // } else {
+          //   try {
+          //     await SoundMode.setSoundMode(RingerModeStatus.normal);
+          //   } on PlatformException {
+          //     print('Please enable permissions required');
+          //   }
+          //   print("down");
         }
       }
     } catch (e) {

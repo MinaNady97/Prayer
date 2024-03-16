@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +13,7 @@ import 'package:sametsalah/fbnotify.dart';
 import 'package:sametsalah/firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'login.dart';
+import 'dart:math';
 
 late var service;
 final MainController controller = Get.put(MainController());
@@ -20,6 +21,7 @@ late var isRunning;
 List<String> prayerTimes = List.filled(5, '');
 List<String> _prayertimes = [];
 List<QueryDocumentSnapshot> constants = [];
+bool flag = true;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeService();
@@ -62,16 +64,42 @@ Future<void> initializeService() async {
   );
 }
 
+List findClosestPrayerTime() {
+  final now = DateTime.now();
+  String closestKey = "loading";
+  int closestDiffInMinutes =
+      999999999999999999; // Initialize with maximum positive value
+
+  controller.prayertime.forEach((key, value) {
+    final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
+        .parse('${now.year}-${now.month}-${now.day} $value');
+    final timeDiffInMinutes = now.difference(prayerTime).inMinutes;
+
+    // Check if prayer time is in the future (positive difference)
+    if (timeDiffInMinutes > 0 && timeDiffInMinutes < closestDiffInMinutes) {
+      closestKey = key;
+      closestDiffInMinutes = timeDiffInMinutes;
+    }
+  });
+
+  // Convert the closest time difference to hours and remaining minutes
+  final hours = closestDiffInMinutes ~/ 60;
+  final remainingMinutes = closestDiffInMinutes % 60;
+
+  return [closestKey, hours, remainingMinutes];
+}
+
 @pragma('vm:entry-point')
 void onstart(ServiceInstance service) async {
   service.on('stopService').listen((event) async {
     await service.stopSelf();
     controller.enable_sound();
   });
-  bool flag = true;
+
   String aftertime = "";
+  List closest_prayer_time = findClosestPrayerTime();
   Timer.periodic(
-    const Duration(seconds: 30),
+    const Duration(seconds: 60),
     (timer) async {
       var now = DateTime.now();
       String currentTime =
@@ -85,33 +113,49 @@ void onstart(ServiceInstance service) async {
       }
       //print(controller.prayertime[0].contains(currentTime));
       String? key = getKeyFromValue(controller.prayertime, currentTime);
-      //String key = "Fajr";
-      print(controller.prayertime['Fajr']);
+      //String key = "Dhuhr";
+      // print(controller.prayertime[key]);
+      // try {
+      //   print(controller.constants[0]["times"][key]);
+      // } catch (e) {
+      //   print("eroor");
+      // }
+      //print(flag);
       if (key == null) {
-        // print('The key for the value is: null');
-        // print(controller.constants[0]["user_name"]);
-        // print("your lat is " + controller.constants[0]["coordinates"]["lat"]);
-        // print("your long is " + controller.constants[0]["coordinates"]["long"]);
+        print('The key for the value is: null');
       } else if (key != null && flag == true) {
         print('The key for the value is: $key');
+
         controller.checkLocation();
-        flag = false;
+
         try {
+          //print("time after $t ");
           aftertime =
-              '${now.hour.toString().padLeft(2, '0')}:${(now.minute + constants[0]["times"][key]).toString().padLeft(2, '0')}';
+              '${now.hour.toString().padLeft(2, '0')}:${(now.minute + int.parse(controller.constants[0]["times"][key])).toString().padLeft(2, '0')}';
+          flag = false;
         } catch (e) {
-          ;
+          //print("eroor2");
+          flag = true;
         }
-      } else if (currentTime == aftertime) {
+      } else if (currentTime.trim() == aftertime.trim() && flag == false) {
+        //print("here 2");
         controller.enable_sound();
         flag = true;
       }
       if (service is AndroidServiceInstance) {
         if (await service.isForegroundService()) {
+          closest_prayer_time = findClosestPrayerTime();
+          String _content = "";
+          try {
+            _content =
+                "${closest_prayer_time[0]} remains: ${closest_prayer_time[1]}h : ${closest_prayer_time[2]}m";
+          } catch (e) {
+            print("here");
+          }
           // if you don't using custom notification, uncomment this
           service.setForegroundNotificationInfo(
-            title: "Auto Silent",
-            content: "Updated at ${DateTime.now()}",
+            title: "Prayer Auto Silent",
+            content: _content,
           );
         }
       }
@@ -173,6 +217,7 @@ class MyApp extends StatelessWidget {
                           controller.change_service_statu(false);
                           service.invoke("stopService");
                           await controller.enable_sound();
+                          flag = true;
                           print("hereeeeeeeeeeeeeeeeeeeeee");
                         } else {
                           service.startService();

@@ -87,11 +87,11 @@ class ManageControllerImp extends ManageController {
   Future<void> update_time() async {
     if (form_time_state.currentState!.validate()) {
       var newTimes = {
-        'Fajr': int.parse(Fajr.text),
-        'Dhuhr': int.parse(Dhuhr.text),
-        'Asr': int.parse(Asr.text),
-        'Maghrib': int.parse(Maghrib.text),
-        'Isha': int.parse(Isha.text),
+        'Fajr': Fajr.text,
+        'Dhuhr': Dhuhr.text,
+        'Asr': Asr.text,
+        'Maghrib': Maghrib.text,
+        'Isha': Isha.text,
       };
       await constants[0].reference.update({
         'times': newTimes,
