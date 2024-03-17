@@ -12,6 +12,7 @@ import 'package:sametsalah/controller.dart';
 import 'package:sametsalah/fbnotify.dart';
 import 'package:sametsalah/firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:sametsalah/notification_page.dart';
 import 'login.dart';
 import 'dart:math';
 
@@ -22,12 +23,20 @@ List<String> prayerTimes = List.filled(5, '');
 List<String> _prayertimes = [];
 List<QueryDocumentSnapshot> constants = [];
 bool flag = true;
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeService();
   constants = controller.constants;
+
+  // Call setupFirebaseMessaging to initialize Firebase Cloud Messaging
+  setupFirebaseMessaging();
+
   runApp(MyApp());
 }
+
+
+
 
 String? getKeyFromValue(Map<String, String> map, String value) {
   for (var entry in map.entries) {
@@ -359,4 +368,20 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
         return '';
     }
   }
+}
+
+// Function to handle notification click event
+void handleNotificationClick() {
+  // Navigate to NotificationPage
+  runApp(MaterialApp(
+    home: NotificationPage(),
+  ));
+}
+
+void setupFirebaseMessaging() {
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    print("yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
+    // Handle notification click event
+    handleNotificationClick();
+  });
 }
