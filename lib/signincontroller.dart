@@ -30,24 +30,27 @@ class LoginControllerImp extends LoginController {
   }
 
   login() async {
-    var user_name_DB = constants[0]["user_name"];
-    var password_DB = constants[0]["password"];
+    try {
+      var user_name_DB = constants[0]["user_name"];
+      var password_DB = constants[0]["password"];
 
-    if (formstate.currentState!.validate()) {
-      if (email.text.trim() == user_name_DB &&
-          password.text.trim() == password_DB) {
-        Get.off(ManagePage(), arguments: constants);
-      } else {
-        Get.snackbar(
-          'Alert', // Title of the snackbar
-          'user name or password not is wrong', // Message of the snackbar
-          snackPosition: SnackPosition.BOTTOM, // Position of the snackbar
-          backgroundColor: Colors.grey[800], // Background color of the snackbar
-          colorText: Colors.white, // Text color of the snackbar
-          duration: Duration(seconds: 3),
-        );
+      if (formstate.currentState!.validate()) {
+        if (email.text.trim() == user_name_DB &&
+            password.text.trim() == password_DB) {
+          Get.off(ManagePage(), arguments: constants);
+        } else {
+          Get.snackbar(
+            'Alert', // Title of the snackbar
+            'user name or password not is wrong', // Message of the snackbar
+            snackPosition: SnackPosition.BOTTOM, // Position of the snackbar
+            backgroundColor:
+                Colors.grey[800], // Background color of the snackbar
+            colorText: Colors.white, // Text color of the snackbar
+            duration: Duration(seconds: 3),
+          );
+        }
       }
-    }
+    } catch (e) {}
   }
 
   @override

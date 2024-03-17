@@ -149,10 +149,36 @@ class ManageControllerImp extends ManageController {
   Future<void> savenotificationToFirestore(String imageUrl) async {
     final collectionRef =
         FirebaseFirestore.instance.collection('notifications');
+
+    // Get the documents in the collection ordered by timestamp in descending order
+    QuerySnapshot querySnapshot =
+        await collectionRef.orderBy('timestamp', descending: true).get();
+    List<DocumentSnapshot> documents = querySnapshot.docs;
+
+    // If there are more than 10 documents, delete the last one
+    if (documents.length >= 10) {
+      // Delete the last document
+      // Delete the last document
+      final lastDocumentData = documents.last.data() as Map<String, dynamic>;
+      if (lastDocumentData != null) {
+        String imageUrlToDelete = lastDocumentData['image_url'];
+        await collectionRef.doc(documents.last.id).delete();
+
+        // Delete the image from Firebase Cloud Storage
+        if (imageUrlToDelete.isNotEmpty) {
+          FirebaseStorage storage = FirebaseStorage.instance;
+          Reference ref = storage.refFromURL(imageUrlToDelete);
+          await ref.delete();
+        }
+      }
+    }
+
+    // Add the new notification
     await collectionRef.add({
       'title': title_notification.text,
       'body': body_notification.text,
       'image_url': imageUrl,
+      'timestamp': FieldValue.serverTimestamp(),
     });
   }
 }

@@ -35,9 +35,6 @@ Future<void> main() async {
   runApp(MyApp());
 }
 
-
-
-
 String? getKeyFromValue(Map<String, String> map, String value) {
   for (var entry in map.entries) {
     if (entry.value.trim() == value.trim()) {
@@ -245,6 +242,16 @@ class MyApp extends StatelessWidget {
                         trailing: Icon(
                           Icons.manage_accounts_rounded,
                         ),
+                      )),
+                  InkWell(
+                      onTap: () {
+                        Get.to(NotificationPage(), arguments: constants);
+                      },
+                      child: ListTile(
+                        title: Text("Notifications"),
+                        trailing: Icon(
+                          Icons.notifications_active_sharp,
+                        ),
                       ))
                 ],
               ),
@@ -312,25 +319,27 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
         formattedDate +
         '?latitude=30.508188279926383&longitude=-97.79224473202267&tune=0,0,0,0,0,0,0,0,0';
     print(url);
-    final response = await http.get(Uri.parse(url));
-    print(response);
-    if (response.statusCode == 200) {
-      print("222222222222222222222222222222222");
-      final Map<String, dynamic> responseData = jsonDecode(response.body);
-      final Map<String, dynamic> data = responseData['data'];
-      print(data[0]);
-      setState(() {
-        prayerTimes[0] = data['timings']['Fajr'];
-        prayerTimes[1] = data['timings']['Dhuhr'];
-        prayerTimes[2] = data['timings']['Asr'];
-        prayerTimes[3] = data['timings']['Maghrib'];
-        prayerTimes[4] = data['timings']['Isha'];
-      });
+    try {
+      final response = await http.get(Uri.parse(url));
+      print(response);
+      if (response.statusCode == 200) {
+        print("222222222222222222222222222222222");
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        final Map<String, dynamic> data = responseData['data'];
+        print(data[0]);
+        setState(() {
+          prayerTimes[0] = data['timings']['Fajr'];
+          prayerTimes[1] = data['timings']['Dhuhr'];
+          prayerTimes[2] = data['timings']['Asr'];
+          prayerTimes[3] = data['timings']['Maghrib'];
+          prayerTimes[4] = data['timings']['Isha'];
+        });
 
-      // Find the entry corresponding to the current date
-    } else {
-      throw Exception('Failed to load prayer timings');
-    }
+        // Find the entry corresponding to the current date
+      } else {
+        throw Exception('Failed to load prayer timings');
+      }
+    } catch (e) {}
   }
 
   @override

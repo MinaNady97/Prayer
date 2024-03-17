@@ -90,21 +90,23 @@ class MainController extends GetxController {
         formattedDate +
         '?latitude=30.508188279926383&longitude=-97.79224473202267&tune=0,0,0,0,0,0,0,0,0';
     print(url);
-    final response = await http.get(Uri.parse(url));
-    print(response);
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseData = jsonDecode(response.body);
-      final Map<String, dynamic> data = responseData['data'];
+    try {
+      final response = await http.get(Uri.parse(url));
+      print(response);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        final Map<String, dynamic> data = responseData['data'];
 
-      prayertime['Fajr'] = data['timings']['Fajr'];
-      prayertime['Dhuhr'] = data['timings']['Dhuhr'];
-      prayertime['Asr'] = data['timings']['Asr'];
-      prayertime['Maghrib'] = data['timings']['Maghrib'];
-      prayertime['Isha'] = data['timings']['Isha'];
-      // Find the entry corresponding to the current date
-    } else {
-      throw Exception('Failed to load prayer timings');
-    }
+        prayertime['Fajr'] = data['timings']['Fajr'];
+        prayertime['Dhuhr'] = data['timings']['Dhuhr'];
+        prayertime['Asr'] = data['timings']['Asr'];
+        prayertime['Maghrib'] = data['timings']['Maghrib'];
+        prayertime['Isha'] = data['timings']['Isha'];
+        // Find the entry corresponding to the current date
+      } else {
+        throw Exception('Failed to load prayer timings');
+      }
+    } catch (e) {}
   }
 
   Future<void> _requestnotifyPermission() async {

@@ -20,7 +20,7 @@ class ManagePage extends StatelessWidget {
       body: ListView(
         children: [
           Text(
-            'Notification Seting',
+            'Notifications Setting',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 23),
           ),
           Form(
