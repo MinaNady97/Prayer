@@ -54,6 +54,13 @@ class ManagePage extends StatelessWidget {
           ),
           CustomButtonAuth(
             widthh: w,
+            text: "select image ",
+            onpressed: () {
+              controller.pickImage();
+            },
+          ),
+          CustomButtonAuth(
+            widthh: w,
             text: "Send Notification",
             onpressed: () {
               controller.sendnotificationanddio();

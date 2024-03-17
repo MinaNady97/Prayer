@@ -1,10 +1,14 @@
+import 'dart:io';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sametsalah/main.dart';
+import 'package:image_picker/image_picker.dart';
 
 abstract class ManageController extends GetxController {}
 
@@ -17,6 +21,7 @@ class ManageControllerImp extends ManageController {
   late TextEditingController Maghrib;
   late TextEditingController Isha;
   List<QueryDocumentSnapshot> constants = [];
+  var pickedFile;
 
   GlobalKey<FormState> form_notification_state = GlobalKey<FormState>();
   GlobalKey<FormState> form_time_state = GlobalKey<FormState>();
@@ -45,6 +50,7 @@ class ManageControllerImp extends ManageController {
 
   sendnotificationanddio() async {
     if (form_notification_state.currentState!.validate()) {
+      await uploadImageToStorage();
       sendnotification();
       Get.snackbar(
         'Done', // Title of the snackbar
@@ -105,5 +111,48 @@ class ManageControllerImp extends ManageController {
         duration: Duration(seconds: 3),
       );
     }
+  }
+
+  Future<void> pickImage() async {
+    final _picker = ImagePicker();
+    pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile == null) {
+      print("error in pickImage");
+    }
+  }
+
+  Future<File> convertXFileToFile(XFile xFile) async {
+    return File(xFile.path);
+  }
+
+  Future<void> uploadImageToStorage() async {
+    var imagePath = pickedFile;
+
+    if (imagePath != null) {
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('images/${DateTime.now().millisecondsSinceEpoch}.jpg');
+      final uploadTask =
+          storageRef.putFile(await convertXFileToFile(imagePath));
+      final snapshot = await uploadTask;
+      if (snapshot.state == TaskState.success) {
+        final downloadUrl = await snapshot.ref.getDownloadURL();
+        savenotificationToFirestore(downloadUrl);
+        pickedFile = null;
+      }
+    } else {
+      savenotificationToFirestore("");
+      print("error in uploadImageToStorage");
+    }
+  }
+
+  Future<void> savenotificationToFirestore(String imageUrl) async {
+    final collectionRef =
+        FirebaseFirestore.instance.collection('notifications');
+    await collectionRef.add({
+      'title': title_notification.text,
+      'body': body_notification.text,
+      'image_url': imageUrl,
+    });
   }
 }
