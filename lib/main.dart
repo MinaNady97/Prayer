@@ -130,8 +130,8 @@ void onstart(ServiceInstance service) async {
 
       String? key;
 
-      if (controller.prayerTimes.contains('06:31')) {
-        key = _getPrayerName(controller.prayerTimes.indexOf('06:31'));
+      if (controller.prayerTimes.contains(currentTime)) {
+        key = _getPrayerName(controller.prayerTimes.indexOf(currentTime));
       } else {
         key = null;
       }
