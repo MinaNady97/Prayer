@@ -125,10 +125,11 @@ class MainController extends GetxController {
         if (distanceInMeters <= 100) {
           try {
             await SoundMode.setSoundMode(RingerModeStatus.silent);
+            print("soind muted");
+            break;
           } on PlatformException {
             print('Please enable permissions required');
           }
-          print("up");
         }
       }
     } catch (e) {
