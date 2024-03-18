@@ -107,7 +107,7 @@ List findClosestPrayerTime() {
   }
   // Convert the closest time difference to hours and remaining minutes
   final hours = closestDiffInMinutes ~/ 60;
-  final remainingMinutes = closestDiffInMinutes % 60;
+  final remainingMinutes = (closestDiffInMinutes % 60) + 1;
 
   return [closestKey, hours, remainingMinutes];
 }
@@ -142,8 +142,12 @@ void onstart(ServiceInstance service) async {
         controller.checkLocation();
 
         try {
+          var h = (int.parse(controller.constants[0]["times"][key]) ~/ 60) +
+              now.hour;
+          var m = (int.parse(controller.constants[0]["times"][key]) % 60) +
+              now.minute;
           aftertime =
-              '${now.hour.toString().padLeft(2, '0')}:${(now.minute + int.parse(controller.constants[0]["times"][key])).toString().padLeft(2, '0')}';
+              '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
           flag = false;
         } catch (e) {
           //print("eroor2");
