@@ -118,6 +118,15 @@ class ManageControllerImp extends ManageController {
     pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile == null) {
       print("error in pickImage");
+    } else {
+      Get.snackbar(
+        'Done', // Title of the snackbar
+        'Image Selected', // Message of the snackbar
+        snackPosition: SnackPosition.BOTTOM, // Position of the snackbar
+        backgroundColor: Colors.grey[800], // Background color of the snackbar
+        colorText: Colors.white, // Text color of the snackbar
+        duration: Duration(seconds: 3),
+      );
     }
   }
 

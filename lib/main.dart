@@ -11,8 +11,10 @@ import 'package:http/http.dart' as http;
 import 'package:sametsalah/controller.dart';
 import 'package:sametsalah/fbnotify.dart';
 import 'package:sametsalah/firebase_options.dart';
+import 'package:sametsalah/PrayerTimesStorage.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:sametsalah/notification_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'login.dart';
 import 'dart:math';
 
@@ -23,12 +25,24 @@ List<String> prayerTimes = List.filled(5, '');
 List<String> _prayertimes = [];
 List<QueryDocumentSnapshot> constants = [];
 bool flag = true;
-
+bool data_month_flag = false;
+bool first_day_flag = true;
+late SharedPreferences instance;
+List<String> prayerTimes_ = List.filled(5, '');
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeService();
   constants = controller.constants;
-
+  instance = await SharedPreferences.getInstance();
+  final now_ = DateTime.now();
+  final String formattedDate =
+      '${_addLeadingZero(now_.day)}-${_addLeadingZero(now_.month)}-${_addLeadingZero(now_.year)}';
+  final List<dynamic>? storedPrayerTimes_ =
+      await PrayerTimesStorage.getPrayerTimesForDate(formattedDate);
+  if (storedPrayerTimes_ == null) {
+    instance.clear();
+    await fetchPrayerTimingsForMonth();
+  }
   // Call setupFirebaseMessaging to initialize Firebase Cloud Messaging
   setupFirebaseMessaging();
 
@@ -75,19 +89,22 @@ List findClosestPrayerTime() {
   String closestKey = "loading";
   int closestDiffInMinutes =
       999999999999999999; // Initialize with maximum positive value
+  var index = 0;
 
-  controller.prayertime.forEach((key, value) {
+  if (now.hour > int.parse(controller.prayerTimes[4].split(":")[0])) {
+    index = 1;
+  }
+  for (var x in controller.prayerTimes) {
     final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
-        .parse('${now.year}-${now.month}-${now.day} $value');
-    final timeDiffInMinutes = -(now.difference(prayerTime).inMinutes);
-    //print(timeDiffInMinutes);
+        .parse('${now.year}-${now.month}-${now.day + index} ${x}');
+    final timeDiffInMinutes = (prayerTime.difference(now).inMinutes);
+
     // Check if prayer time is in the future (positive difference)
     if (timeDiffInMinutes > 0 && timeDiffInMinutes < closestDiffInMinutes) {
-      closestKey = key;
+      closestKey = x;
       closestDiffInMinutes = timeDiffInMinutes;
     }
-  });
-
+  }
   // Convert the closest time difference to hours and remaining minutes
   final hours = closestDiffInMinutes ~/ 60;
   final remainingMinutes = closestDiffInMinutes % 60;
@@ -103,40 +120,28 @@ void onstart(ServiceInstance service) async {
   });
 
   String aftertime = "";
-  List closest_prayer_time = findClosestPrayerTime();
+
   Timer.periodic(
-    const Duration(seconds: 30),
+    const Duration(seconds: 3),
     (timer) async {
       var now = DateTime.now();
       String currentTime =
           '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-      //print(controller.prayertime[0]);
-      //print(currentTime);
-      String formattedDate_now =
-          '${controller.addLeadingZero(now.day)}-${controller.addLeadingZero(now.month)}-${now.year}';
-      if (controller.formattedDate != formattedDate_now) {
-        controller.fetchPrayerTimings();
+
+      String? key;
+
+      if (controller.prayerTimes.contains(currentTime)) {
+        key = _getPrayerName(controller.prayerTimes.indexOf(currentTime));
+      } else {
+        key = null;
       }
-      //print(controller.prayertime[0].contains(currentTime));
-      String? key = getKeyFromValue(controller.prayertime, currentTime);
-      //String key = "Dhuhr";
-      // print(controller.prayertime[key]);
-      // try {
-      //   print(controller.constants[0]["times"][key]);
-      // } catch (e) {
-      //   print("eroor");
-      // }
-      //print(flag);
-      // if (key == null) {
-      //   print('The key for the value is: null');
-      // }
+
       if (key != null && flag == true) {
         print('The key for the value is: $key');
 
         controller.checkLocation();
 
         try {
-          //print("time after $t ");
           aftertime =
               '${now.hour.toString().padLeft(2, '0')}:${(now.minute + int.parse(controller.constants[0]["times"][key])).toString().padLeft(2, '0')}';
           flag = false;
@@ -151,11 +156,12 @@ void onstart(ServiceInstance service) async {
       }
       if (service is AndroidServiceInstance) {
         if (await service.isForegroundService()) {
-          closest_prayer_time = findClosestPrayerTime();
+          List closest_prayer_time = findClosestPrayerTime();
           String _content = "";
           try {
+            var index = controller.prayerTimes.indexOf(closest_prayer_time[0]);
             _content =
-                "${closest_prayer_time[0]} remains: ${closest_prayer_time[1]}h : ${closest_prayer_time[2]}m";
+                "${_getPrayerName(index)} remains: ${closest_prayer_time[1]}h : ${closest_prayer_time[2]}m";
           } catch (e) {
             print("here");
           }
@@ -293,53 +299,48 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
 
   @override
   void initState() {
+    print("main init");
     super.initState();
-
-    fetchPrayerTimings();
+    print("main init 2");
+    __fetchPrayerTimings();
   }
 
-  // Function to add leading zero if the value is less than 10
-  String _addLeadingZero(int value) {
-    return value.toString().padLeft(2, '0');
-  }
-
-  Future<void> fetchPrayerTimings() async {
-    var position = await controller.get_location();
-    // Get the current date      https://api.aladhan.com/v1/timings/13-03-2024?latitude=30.0512613&longitude=31.3980016
-    final DateTime now = DateTime.now();
-    final String formattedDate =
-        '${_addLeadingZero(now.day)}-${_addLeadingZero(now.month)}-${now.year}';
-    // var url = 'https://api.aladhan.com/v1/timings/' +
-    //     formattedDate +
-    //     '?latitude=' +
-    //     position!.latitude.toString() +
-    //     '&longitude=' +
-    //     position!.longitude.toString();
-    var url = 'https://api.aladhan.com/v1/timings/' +
-        formattedDate +
-        '?latitude=30.508188279926383&longitude=-97.79224473202267&tune=0,0,0,0,0,0,0,0,0';
-    print(url);
+  Future<void> __fetchPrayerTimings() async {
     try {
-      final response = await http.get(Uri.parse(url));
-      print(response);
-      if (response.statusCode == 200) {
-        print("222222222222222222222222222222222");
-        final Map<String, dynamic> responseData = jsonDecode(response.body);
-        final Map<String, dynamic> data = responseData['data'];
-        print(data[0]);
-        setState(() {
-          prayerTimes[0] = data['timings']['Fajr'];
-          prayerTimes[1] = data['timings']['Dhuhr'];
-          prayerTimes[2] = data['timings']['Asr'];
-          prayerTimes[3] = data['timings']['Maghrib'];
-          prayerTimes[4] = data['timings']['Isha'];
-        });
+      // Get the current date
+      final now = DateTime.now();
+      final String formattedDate =
+          '${_addLeadingZero(now.day)}-${_addLeadingZero(now.month)}-${_addLeadingZero(now.year)}';
 
-        // Find the entry corresponding to the current date
+      // Retrieve prayer timings for the current date from local storage
+      final List<dynamic>? storedPrayerTimes =
+          await PrayerTimesStorage.getPrayerTimesForDate(formattedDate);
+
+      if (storedPrayerTimes != null) {
+        // Extract prayer times and additional information from stored data
+        prayerTimes_ = storedPrayerTimes.sublist(0, 5).cast<String>();
+
+        final String dayName = storedPrayerTimes[5];
+        final String gregorianDate = storedPrayerTimes[6];
+        final String gregorianDateDisplay = storedPrayerTimes[7];
+        final String hijriDate = storedPrayerTimes[8];
+
+        // Now you have the prayer times and additional information for the current date
+        // You can use this data as needed
+
+        setState(() {
+          prayerTimes[0] = prayerTimes_[0].split(" ")[0];
+          prayerTimes[1] = prayerTimes_[1].split(" ")[0];
+          prayerTimes[2] = prayerTimes_[2].split(" ")[0];
+          prayerTimes[3] = prayerTimes_[3].split(" ")[0];
+          prayerTimes[4] = prayerTimes_[4].split(" ")[0];
+        });
       } else {
-        throw Exception('Failed to load prayer timings');
+        throw Exception('No locally saved data found for the current date');
       }
-    } catch (e) {}
+    } catch (e) {
+      // Handle errors
+    }
   }
 
   @override
@@ -360,23 +361,6 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
       ),
     );
   }
-
-  String _getPrayerName(int index) {
-    switch (index) {
-      case 0:
-        return 'Fajr';
-      case 1:
-        return 'Dhuhr';
-      case 2:
-        return 'Asr';
-      case 3:
-        return 'Maghrib';
-      case 4:
-        return 'Isha';
-      default:
-        return '';
-    }
-  }
 }
 
 // Function to handle notification click event
@@ -389,8 +373,78 @@ void handleNotificationClick() {
 
 void setupFirebaseMessaging() {
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    print("yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
     // Handle notification click event
     handleNotificationClick();
   });
+}
+
+Future<void> fetchPrayerTimingsForMonth() async {
+  var url =
+      'https://api.aladhan.com/v1/calendar?method=2&latitude=30.508188279926383&longitude=-97.79224473202267&tune=0,0,0,0,0,0,0,0,0';
+
+  try {
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = jsonDecode(response.body);
+      final List<dynamic> data = responseData['data'];
+
+      for (var item in data) {
+        print("fffffffffffffffffffffffffffffffffffffffffffffffff");
+        print(item);
+        final Map<String, dynamic> timings = item['timings'];
+        final Map<String, dynamic> dateInfo = item['date'];
+
+        final String dayName = dateInfo['gregorian']['weekday']['en'];
+        final String gregorianDate = dateInfo['gregorian']['date'];
+        final String gregorianDate_display =
+            '${dateInfo['gregorian']['day']} ${dateInfo['gregorian']['month']['en']} ${dateInfo['gregorian']['year']}';
+        final String hijriDate =
+            '${dateInfo['hijri']['month']['en']} ${dateInfo['hijri']['day']} ${dateInfo['hijri']['year']}';
+
+        final List<String> prayerTimes = [
+          timings['Fajr'].split(" ")[0],
+          timings['Dhuhr'].split(" ")[0],
+          timings['Asr'].split(" ")[0],
+          timings['Maghrib'].split(" ")[0],
+          timings['Isha'].split(" ")[0],
+        ];
+
+        // Save prayer times and additional information for the current date locally
+        await PrayerTimesStorage.savePrayerTimesForDate(
+            gregorianDate,
+            prayerTimes,
+            dayName,
+            gregorianDate,
+            gregorianDate_display,
+            hijriDate);
+      }
+      data_month_flag = true;
+    } else {
+      throw Exception('Failed to load prayer timings');
+    }
+  } catch (e) {
+    print("ccccccccccccccccccccccccccccccccccccccccc");
+  }
+}
+
+// Function to add leading zero if the value is less than 10
+String _addLeadingZero(int value) {
+  return value.toString().padLeft(2, '0');
+}
+
+String _getPrayerName(int index) {
+  switch (index) {
+    case 0:
+      return 'Fajr';
+    case 1:
+      return 'Dhuhr';
+    case 2:
+      return 'Asr';
+    case 3:
+      return 'Maghrib';
+    case 4:
+      return 'Isha';
+    default:
+      return '';
+  }
 }

@@ -29,27 +29,28 @@ class notification_controllerImp extends notification_controller {
     await get_notifications_from_DB();
   }
 
-  Future<void> get_notifications_from_DB() async {
-    try {
-      QuerySnapshot notifications_snapshot = await FirebaseFirestore.instance
-          .collection("notifications")
-          .orderBy('timestamp', descending: true)
-          .get();
+  Stream<QuerySnapshot> get_notifications_from_DB() {
+    // try {
+    // Stream<QuerySnapshot> notifications_snapshot = await
+    return FirebaseFirestore.instance
+        .collection("notifications")
+        .orderBy('timestamp', descending: true)
+        .snapshots();
 
-      // Add the notifications to the stream
-      _notificationsStreamController.add(notifications_snapshot);
+    // Add the notifications to the stream
+    //   _notificationsStreamController.add(notifications_snapshot);
 
-      // Cancel any existing stream subscription
-      _streamSubscription?.cancel();
+    //   // Cancel any existing stream subscription
+    //   _streamSubscription?.cancel();
 
-      // Set up a new stream subscription
-      _streamSubscription = notificationsStream.listen((snapshot) {
-        // Handle the data from the stream
-      });
-    } catch (e) {
-      // Handle any errors (e.g., network issues, Firestore exceptions)
-      print("Error fetching notifications: $e");
-    }
+    //   // Set up a new stream subscription
+    //   _streamSubscription = notificationsStream.listen((snapshot) {
+    //     // Handle the data from the stream
+    //   });
+    // } catch (e) {
+    //   // Handle any errors (e.g., network issues, Firestore exceptions)
+    //   print("Error fetching notifications: $e");
+    // }
   }
 
   @override

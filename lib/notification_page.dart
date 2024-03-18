@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sametsalah/notification_controller.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:sametsalah/notifications_detials.dart';
 // Assuming you have a notification_controllerImp class
 //notification_controllerImp controller = Get.put(notification_controllerImp());
 
@@ -39,10 +41,9 @@ class _NotificationsListPageState extends State<NotificationPage> {
           title: Text("Notifications Page"),
           backgroundColor: Colors.orangeAccent,
         ),
-        backgroundColor: Colors.orangeAccent[100],
         body: StreamBuilder<QuerySnapshot>(
-          stream:
-              controller.notificationsStream, // Replace with your actual stream
+          stream: controller
+              .get_notifications_from_DB(), // Replace with your actual stream
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               final notifications = snapshot.data!.docs;
@@ -51,60 +52,10 @@ class _NotificationsListPageState extends State<NotificationPage> {
                 itemBuilder: (context, index) {
                   final notificationData =
                       notifications[index].data() as Map<String, dynamic>;
-                  return Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Card(
-                      elevation: 5.0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                      ),
-                      child: Column(
-                        children: <Widget>[
-                          if ((notificationData["image_url"] as String)
-                              .isNotEmpty)
-                            ClipRRect(
-                              borderRadius: BorderRadius.vertical(
-                                  top: Radius.circular(10.0)),
-                              child: GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => PhotoView(
-                                          imageProvider: NetworkImage(
-                                              notificationData["image_url"]),
-                                        ),
-                                      ));
-                                },
-                                child: Image.network(
-                                  notificationData["image_url"] as String,
-                                  width: double.infinity,
-                                  height: 200,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                          Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: ListTile(
-                              title: Text(
-                                notificationData["title"] as String,
-                                style: TextStyle(
-                                  fontSize: 20.0,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              subtitle: Text(
-                                notificationData["body"] as String,
-                                style: TextStyle(
-                                  fontSize: 16.0,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  return Custoum_notification_card(
+                    image: notifications[index]["image_url"],
+                    title: notifications[index]["title"],
+                    body: notifications[index]["body"],
                   );
                 },
               );
@@ -115,5 +66,102 @@ class _NotificationsListPageState extends State<NotificationPage> {
             }
           },
         ));
+  }
+}
+
+class Custoum_notification_card extends StatelessWidget {
+  const Custoum_notification_card({
+    super.key,
+    required this.image,
+    required this.title,
+    required this.body,
+  });
+
+  final String image;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        // Navigate to the details page when tapped
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => NotificationsDetialsPageState(
+              imageUrl: image,
+              title: title,
+              text: body,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        margin: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+        width: 140,
+        height: 140,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey[300]!.withOpacity(0.2), // Subtle shadow
+              blurRadius: 4.0,
+              offset: const Offset(1.0, 2.0),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              // Expand remaining space
+              child: Container(
+                margin: EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start, // Align text left
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.bold,
+                        color:
+                            Colors.black87, // Darker text for better contrast
+                      ),
+                    ),
+                    Flexible(
+                      child: Text(
+                        body,
+                        style: const TextStyle(
+                          overflow: TextOverflow.ellipsis,
+                          fontSize: 16.0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (image.isNotEmpty) // Check if image URL is not empty
+              Container(
+                width: 140.0,
+                height: 140.0,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8.0),
+                  child: CachedNetworkImage(
+                    fit: BoxFit.cover,
+                    imageUrl: image,
+                    placeholder: (context, url) =>
+                        const Center(child: CircularProgressIndicator()),
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.error),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }

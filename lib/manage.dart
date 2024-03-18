@@ -62,8 +62,23 @@ class ManagePage extends StatelessWidget {
           CustomButtonAuth(
             widthh: w,
             text: "Send Notification",
-            onpressed: () {
-              controller.sendnotificationanddio();
+            onpressed: () async {
+              // Show the progress indicator
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (BuildContext context) {
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                },
+              );
+
+              // Call your notification function
+              await controller.sendnotificationanddio();
+
+              // Hide the progress indicator
+              Navigator.of(context).pop();
             },
           ),
           SizedBox(
