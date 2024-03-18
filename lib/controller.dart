@@ -53,7 +53,7 @@ class MainController extends GetxController {
     await _requestnotifyPermission();
     fcmcofing();
     await get_times_from_DB();
-
+    await get_coordinates_from_DB();
     await fetchPrayerTimings__();
 
     super.onInit();
@@ -152,6 +152,9 @@ class MainController extends GetxController {
             "constants") // get the colletion buses from database where it conaton station 1
         .get();
     constants.addAll(times_snapshot.docs);
+  }
+
+  Future<void> get_coordinates_from_DB() async {
     QuerySnapshot coordinates_snapshot = await FirebaseFirestore.instance
         .collection(
             "coordinates") // get the colletion buses from database where it conaton station 1
@@ -187,7 +190,6 @@ class MainController extends GetxController {
         prayerTimes[2] = prayerTimes_[2].split(" ")[0];
         prayerTimes[3] = prayerTimes_[3].split(" ")[0];
         prayerTimes[4] = prayerTimes_[4].split(" ")[0];
-        print("pppppppppppppppppppppppppp");
       } else {
         throw Exception('No locally saved data found for the current date');
       }

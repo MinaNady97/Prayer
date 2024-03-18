@@ -96,9 +96,12 @@ List findClosestPrayerTime() {
       999999999999999999; // Initialize with maximum positive value
   var index = 0;
 
-  if (now.hour > int.parse(controller.prayerTimes[4].split(":")[0])) {
+  if (now.hour > int.parse(controller.prayerTimes[4].split(":")[0]) ||
+      (now.hour == int.parse(controller.prayerTimes[4].split(":")[0]) &&
+          now.minute >= int.parse(controller.prayerTimes[4].split(":")[1]))) {
     index = 1;
   }
+
   for (var x in controller.prayerTimes) {
     final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
         .parse('${now.year}-${now.month}-${now.day + index} ${x}');
@@ -112,7 +115,7 @@ List findClosestPrayerTime() {
   }
   // Convert the closest time difference to hours and remaining minutes
   final hours = closestDiffInMinutes ~/ 60;
-  final remainingMinutes = (closestDiffInMinutes % 60) + 1;
+  final remainingMinutes = closestDiffInMinutes % 60 + 1;
 
   return [closestKey, hours, remainingMinutes];
 }
@@ -147,7 +150,7 @@ void onstart(ServiceInstance service) async {
         controller.checkLocation();
 
         try {
-          await controller.get_coordinates_from_DB();
+          await controller.get_times_from_DB();
           var h = (int.parse(controller.constants[0]["times"][key]) ~/ 60) +
               now.hour;
           var m = (int.parse(controller.constants[0]["times"][key]) % 60) +
