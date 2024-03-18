@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sametsalah/signincontroller.dart';
-import 'package:sametsalah/vali_input.dart';
-import 'custombuttonauth.dart';
-import 'customtextfieldauth.dart';
-import 'logoimage.dart';
+import 'package:sametsalah/controllers/signincontroller.dart';
+import 'package:sametsalah/other/vali_input.dart';
+import '../other/custombuttonauth.dart';
+import '../other/customtextfieldauth.dart';
+import '../other/logoimage.dart';
 class LoginPage extends StatelessWidget {
   const LoginPage({Key? key}) : super(key: key);
   @override

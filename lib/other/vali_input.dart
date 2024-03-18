@@ -1,5 +1,3 @@
-import 'package:get/get.dart';
-
 validatefunc_input(String value, int min, int max, String type) {
   if (value.isEmpty) {
     return "cant be empty";

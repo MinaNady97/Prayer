@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sametsalah/vali_input.dart';
-
-import 'custombuttonauth.dart';
-import 'customtextfieldauth.dart';
-import 'manage_controller.dart';
+import 'package:sametsalah/other/vali_input.dart';
+import '../other/custombuttonauth.dart';
+import '../other/customtextfieldauth.dart';
+import '/controllers/manage_controller.dart';
 
 class ManagePage extends StatelessWidget {
   const ManagePage({super.key});

@@ -3,10 +3,9 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sametsalah/notification_controller.dart';
-import 'package:photo_view/photo_view.dart';
+import 'package:sametsalah/controllers/notification_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:sametsalah/notifications_detials.dart';
+import 'package:sametsalah/other/notifications_detials.dart';
 // Assuming you have a notification_controllerImp class
 //notification_controllerImp controller = Get.put(notification_controllerImp());
 
