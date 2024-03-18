@@ -29,16 +29,21 @@ bool data_month_flag = false;
 bool first_day_flag = true;
 late SharedPreferences instance;
 List<String> prayerTimes_ = List.filled(5, '');
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeService();
   constants = controller.constants;
   instance = await SharedPreferences.getInstance();
+
   final now_ = DateTime.now();
+
   final String formattedDate =
       '${_addLeadingZero(now_.day)}-${_addLeadingZero(now_.month)}-${_addLeadingZero(now_.year)}';
+
   final List<dynamic>? storedPrayerTimes_ =
       await PrayerTimesStorage.getPrayerTimesForDate(formattedDate);
+
   if (storedPrayerTimes_ == null) {
     instance.clear();
     await fetchPrayerTimingsForMonth();
@@ -142,6 +147,7 @@ void onstart(ServiceInstance service) async {
         controller.checkLocation();
 
         try {
+          await controller.get_coordinates_from_DB();
           var h = (int.parse(controller.constants[0]["times"][key]) ~/ 60) +
               now.hour;
           var m = (int.parse(controller.constants[0]["times"][key]) % 60) +
