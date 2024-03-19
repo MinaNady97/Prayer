@@ -46,7 +46,8 @@ void onstart(ServiceInstance service) async {
       } else {
         key = null;
       }
-
+      print(key);
+      key = "Fajr";
       if (key != null && control.flag == true) {
         print('The key for the value is: $key');
 
@@ -54,10 +55,26 @@ void onstart(ServiceInstance service) async {
 
         try {
           await control.get_times_from_DB();
-          var h = (int.parse(constants[0]["times"][key]) ~/ 60) + now.hour;
-          var m = (int.parse(constants[0]["times"][key]) % 60) + now.minute;
+          print("hereeeeeeeeeeee2");
+          var m = ((int.parse(control.constants[0]["times"][key]) % 60) +
+                  now.minute) %
+              60;
+
+          var v = ((int.parse(control.constants[0]["times"][key]) % 60) +
+                  now.minute) ~/
+              60;
+
+          var h = (int.parse(control.constants[0]["times"][key]) ~/ 60) +
+              now.hour +
+              v;
+
+          if (h >= 24) {
+            h = h % 24;
+          }
+
           aftertime =
               '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
+          print(aftertime);
           control.flag = false;
         } catch (e) {
           //print("eroor2");
@@ -236,6 +253,7 @@ class MainController extends GetxController {
         .collection(
             "constants") // get the colletion buses from database where it conaton station 1
         .get();
+    constants.clear();
     constants.addAll(times_snapshot.docs);
   }
 
@@ -244,6 +262,7 @@ class MainController extends GetxController {
         .collection(
             "coordinates") // get the colletion buses from database where it conaton station 1
         .get();
+    coordinates.clear();
     coordinates.addAll(coordinates_snapshot.docs); // add docs to list
   }
 

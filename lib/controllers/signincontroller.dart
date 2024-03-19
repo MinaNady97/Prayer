@@ -21,7 +21,6 @@ class LoginControllerImp extends LoginController {
   loginfirebase() async {}
   @override
   void onInit() async {
-    constants = Get.arguments;
     email = TextEditingController();
     password = TextEditingController();
     email.text = "";
@@ -31,6 +30,8 @@ class LoginControllerImp extends LoginController {
 
   login() async {
     try {
+      await get_user_from_DB();
+
       var user_name_DB = constants[0]["user_name"];
       var password_DB = constants[0]["password"];
 
@@ -50,7 +51,18 @@ class LoginControllerImp extends LoginController {
           );
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      ;
+    }
+  }
+
+  Future<void> get_user_from_DB() async {
+    QuerySnapshot user_snapshot = await FirebaseFirestore.instance
+        .collection(
+            "constants") // get the colletion buses from database where it conaton station 1
+        .get();
+    constants.clear();
+    constants.addAll(user_snapshot.docs);
   }
 
   @override

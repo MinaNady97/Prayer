@@ -74,7 +74,7 @@ class MyApp extends StatelessWidget {
                   ),
                   InkWell(
                       onTap: () {
-                        Get.to(LoginPage(), arguments: constants);
+                        Get.to(LoginPage());
                       },
                       child: ListTile(
                         title: Text("Login As Admin"),
@@ -84,7 +84,7 @@ class MyApp extends StatelessWidget {
                       )),
                   InkWell(
                       onTap: () {
-                        Get.to(NotificationPage(), arguments: constants);
+                        Get.to(NotificationPage());
                       },
                       child: ListTile(
                         title: Text("Notifications"),
@@ -163,10 +163,10 @@ class PrayerTimesPage extends StatefulWidget {
 }
 
 class _PrayerTimesPageState extends State<PrayerTimesPage> {
-  String location = 'Texas'; // Change to your desired location
-  String method =
-      '2'; // Change the method according to your preference, check API documentation for available methods
-  String apiUrl = ''; // Declare apiUrl variable here
+  // String location = 'Texas'; // Change to your desired location
+  // String method =
+  //     '2'; // Change the method according to your preference, check API documentation for available methods
+  // String apiUrl = ''; // Declare apiUrl variable here
 
   // 5 prayer times
 

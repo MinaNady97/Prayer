@@ -9,13 +9,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 late var service;
 final MainController controller = Get.put(MainController());
-List<QueryDocumentSnapshot> constants = [];
+//List<QueryDocumentSnapshot> constants = [];
 late SharedPreferences instance;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await controller.initializeService();
-  constants = controller.constants;
+  //constants = controller.constants;
   instance = await SharedPreferences.getInstance();
 
   final now_ = DateTime.now();
