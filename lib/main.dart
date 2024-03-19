@@ -17,7 +17,7 @@ Future<void> main() async {
   await controller.initializeService();
   //constants = controller.constants;
   instance = await SharedPreferences.getInstance();
-
+  controller.updateTime();
   final now_ = DateTime.now();
 
   final String formattedDate =
@@ -30,8 +30,10 @@ Future<void> main() async {
     instance.clear();
     await controller.fetchPrayerTimingsForMonth();
   }
+
   // Call setupFirebaseMessaging to initialize Firebase Cloud Messaging
   controller.setupFirebaseMessaging();
   await controller.fetchPrayerTimings();
+
   runApp(MyApp());
 }

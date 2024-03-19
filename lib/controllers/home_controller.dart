@@ -46,8 +46,7 @@ void onstart(ServiceInstance service) async {
       } else {
         key = null;
       }
-      print(key);
-      key = "Fajr";
+
       if (key != null && control.flag == true) {
         print('The key for the value is: $key');
 
@@ -55,7 +54,7 @@ void onstart(ServiceInstance service) async {
 
         try {
           await control.get_times_from_DB();
-          print("hereeeeeeeeeeee2");
+
           var m = ((int.parse(control.constants[0]["times"][key]) % 60) +
                   now.minute) %
               60;
@@ -74,7 +73,7 @@ void onstart(ServiceInstance service) async {
 
           aftertime =
               '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
-          print(aftertime);
+
           control.flag = false;
         } catch (e) {
           //print("eroor2");
@@ -99,7 +98,7 @@ void onstart(ServiceInstance service) async {
           }
           // if you don't using custom notification, uncomment this
           service.setForegroundNotificationInfo(
-            title: "Prayer Auto Silent",
+            title: "ISBC",
             content: _content,
           );
         }
@@ -130,6 +129,7 @@ class MainController extends GetxController {
   List<String> prayerTimes_ = List.filled(5, '');
   String theme_value = "dark";
   bool flag_test = false;
+  var currentTime = "".obs;
 
   void changeTheme(bool value) {
     isDark.value = value;
@@ -443,5 +443,12 @@ class MainController extends GetxController {
       default:
         return '';
     }
+  }
+
+  void updateTime() {
+    // Update the current time
+
+    currentTime.value =
+        '${addLeadingZero(DateTime.now().hour)} : ${addLeadingZero(DateTime.now().minute)}';
   }
 }

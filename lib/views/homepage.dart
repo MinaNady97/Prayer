@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
@@ -12,6 +14,9 @@ final MainController controller = Get.put(MainController());
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    Timer.periodic(Duration(seconds: 1), (timer) {
+      controller.updateTime();
+    });
     return Obx(
       () => GetMaterialApp(
           debugShowCheckedModeBanner: false,
@@ -31,11 +36,6 @@ class MyApp extends StatelessWidget {
                           "images/yh.png",
                           height: 100,
                           width: 100,
-                        ),
-                        Text(
-                          'Settings',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 23),
                         ),
                       ],
                     ),
@@ -102,17 +102,9 @@ class MyApp extends StatelessWidget {
                       fit: BoxFit.cover)),
               child: Column(
                 children: [
-                  // Text(
-                  //   "Prayer Times",
-                  //   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 23),
-                  // ),
                   SizedBox(
                     height: 90,
                   ),
-                  // Image.asset(
-                  //   "images/yh.png",
-                  //   height: 160,
-                  // ),
                   Text(
                     controller.dayName,
                     style: TextStyle(fontSize: 23),
@@ -124,11 +116,10 @@ class MyApp extends StatelessWidget {
                     controller.hijriDate,
                     style: TextStyle(fontSize: 15),
                   ),
-
                   Text(controller.gregorianDateDisplay,
                       style: TextStyle(fontSize: 15)),
                   Text(
-                    "${controller.addLeadingZero(DateTime.now().hour).toString()} : ${controller.addLeadingZero(DateTime.now().minute).toString()}",
+                    controller.currentTime.value,
                     style: TextStyle(fontSize: 60),
                   ),
                   Text(
@@ -136,9 +127,8 @@ class MyApp extends StatelessWidget {
                   SizedBox(
                     height: 10,
                   ),
-
                   Text(
-                    "Islamic Center of Fremont",
+                    "Islamic Center of Brushy Creek",
                     style: TextStyle(fontSize: 15),
                   ),
                   SizedBox(
@@ -149,7 +139,7 @@ class MyApp extends StatelessWidget {
               ),
             ),
             appBar: AppBar(
-              title: Text("Home"),
+              // title: Text("Home"),
               backgroundColor: const Color.fromARGB(255, 83, 179, 168),
             ),
           )),
