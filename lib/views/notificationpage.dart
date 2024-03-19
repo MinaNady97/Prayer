@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sametsalah/controllers/notification_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:sametsalah/other/notifications_detials.dart';
+import 'package:sametsalah/views/notifications_detialspage.dart';
 // Assuming you have a notification_controllerImp class
 //notification_controllerImp controller = Get.put(notification_controllerImp());
 
@@ -38,7 +38,7 @@ class _NotificationsListPageState extends State<NotificationPage> {
     return Scaffold(
         appBar: AppBar(
           title: Text("Notifications Page"),
-          backgroundColor: Colors.orangeAccent,
+          backgroundColor: const Color.fromARGB(255, 83, 179, 168),
         ),
         body: StreamBuilder<QuerySnapshot>(
           stream: controller

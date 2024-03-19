@@ -30,7 +30,7 @@ class _NotificationsListPageState extends State<NotificationsDetialsPageState> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Details Page"),
-        backgroundColor: Colors.orangeAccent,
+        backgroundColor: const Color.fromARGB(255, 83, 179, 168),
       ),
       body: Center(
         child: Column(

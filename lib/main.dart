@@ -32,6 +32,6 @@ Future<void> main() async {
   }
   // Call setupFirebaseMessaging to initialize Firebase Cloud Messaging
   controller.setupFirebaseMessaging();
-
+  await controller.fetchPrayerTimings();
   runApp(MyApp());
 }

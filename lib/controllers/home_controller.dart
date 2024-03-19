@@ -22,10 +22,8 @@ import 'package:sametsalah/other/firebase_options.dart';
 import 'package:sametsalah/other/fbnotify.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 
-
-
-  @pragma('vm:entry-point')
- void onstart(ServiceInstance service) async {
+@pragma('vm:entry-point')
+void onstart(ServiceInstance service) async {
   final MainController control = Get.put(MainController());
   service.on('stopService').listen((event) async {
     await service.stopSelf();
@@ -44,8 +42,7 @@ import 'package:flutter_background_service_android/flutter_background_service_an
       String? key;
 
       if (control.prayerTimes.contains(currentTime)) {
-        key = 
-            control.getPrayerName(control.prayerTimes.indexOf(currentTime));
+        key = control.getPrayerName(control.prayerTimes.indexOf(currentTime));
       } else {
         key = null;
       }
@@ -57,10 +54,8 @@ import 'package:flutter_background_service_android/flutter_background_service_an
 
         try {
           await control.get_times_from_DB();
-          var h = (int.parse(constants[0]["times"][key]) ~/ 60) +
-              now.hour;
-          var m = (int.parse(constants[0]["times"][key]) % 60) +
-              now.minute;
+          var h = (int.parse(constants[0]["times"][key]) ~/ 60) + now.hour;
+          var m = (int.parse(constants[0]["times"][key]) % 60) + now.minute;
           aftertime =
               '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
           control.flag = false;
@@ -96,9 +91,6 @@ import 'package:flutter_background_service_android/flutter_background_service_an
   );
 }
 
-
-
-
 class MainController extends GetxController {
   RxBool isDark = true.obs;
   RxBool service_is_runing = false.obs;
@@ -108,7 +100,10 @@ class MainController extends GetxController {
   String formattedDate = "";
   String targetLatitude = "";
   String targetLongitude = "";
-
+  String dayName = "";
+  String gregorianDate = "";
+  String gregorianDateDisplay = "";
+  String hijriDate = "";
   late var isRunning;
   List<String> _prayertimes = [];
   bool flag = true;
@@ -116,9 +111,16 @@ class MainController extends GetxController {
   bool first_day_flag = true;
   late SharedPreferences instance;
   List<String> prayerTimes_ = List.filled(5, '');
+  String theme_value = "dark";
+  bool flag_test = false;
 
   void changeTheme(bool value) {
     isDark.value = value;
+    if (value) {
+      theme_value = "dark";
+    } else {
+      theme_value = "light";
+    }
     //update();
   }
 
@@ -260,10 +262,10 @@ class MainController extends GetxController {
         // Extract prayer times and additional information from stored data
         prayerTimes_ = storedPrayerTimes.sublist(0, 5).cast<String>();
 
-        final String dayName = storedPrayerTimes[5];
-        final String gregorianDate = storedPrayerTimes[6];
-        final String gregorianDateDisplay = storedPrayerTimes[7];
-        final String hijriDate = storedPrayerTimes[8];
+        dayName = storedPrayerTimes[5];
+        gregorianDate = storedPrayerTimes[6];
+        gregorianDateDisplay = storedPrayerTimes[7];
+        hijriDate = storedPrayerTimes[8];
 
         // Now you have the prayer times and additional information for the current date
         // You can use this data as needed
@@ -315,7 +317,6 @@ class MainController extends GetxController {
       ),
     );
   }
-
 
   List findClosestPrayerTime() {
     final now = DateTime.now();

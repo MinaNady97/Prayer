@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'package:http/http.dart';
 import 'package:sametsalah/controllers/home_controller.dart';
 import 'package:sametsalah/main.dart';
 import 'package:sametsalah/views/loginpage.dart';
@@ -39,7 +40,7 @@ class MyApp extends StatelessWidget {
                       ],
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.orangeAccent,
+                      color: const Color.fromARGB(255, 83, 179, 168),
                     ),
                   ),
                   ListTile(
@@ -94,22 +95,62 @@ class MyApp extends StatelessWidget {
                 ],
               ),
             ),
-            body: Column(
-              children: [
-                Text(
-                  "Prayer Times",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 23),
-                ),
-                Image.asset(
-                  "images/yh.png",
-                  height: 160,
-                ),
-                Expanded(child: PrayerTimesPage()),
-              ],
+            body: Container(
+              decoration: BoxDecoration(
+                  image: DecorationImage(
+                      image: AssetImage("images/${controller.theme_value}.png"),
+                      fit: BoxFit.cover)),
+              child: Column(
+                children: [
+                  // Text(
+                  //   "Prayer Times",
+                  //   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 23),
+                  // ),
+                  SizedBox(
+                    height: 90,
+                  ),
+                  // Image.asset(
+                  //   "images/yh.png",
+                  //   height: 160,
+                  // ),
+                  Text(
+                    controller.dayName,
+                    style: TextStyle(fontSize: 23),
+                  ),
+                  SizedBox(
+                    height: 8,
+                  ),
+                  Text(
+                    controller.hijriDate,
+                    style: TextStyle(fontSize: 15),
+                  ),
+
+                  Text(controller.gregorianDateDisplay,
+                      style: TextStyle(fontSize: 15)),
+                  Text(
+                    "${controller.addLeadingZero(DateTime.now().hour).toString()} : ${controller.addLeadingZero(DateTime.now().minute).toString()}",
+                    style: TextStyle(fontSize: 60),
+                  ),
+                  Text(
+                      "سَمِعْنَا وَأَطَعْنَا ۖ غُفْرَانَكَ رَبَّنَا وَإِلَيْكَ الْمَصِيرُ"),
+                  SizedBox(
+                    height: 10,
+                  ),
+
+                  Text(
+                    "Islamic Center of Fremont",
+                    style: TextStyle(fontSize: 15),
+                  ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  Expanded(child: PrayerTimesPage()),
+                ],
+              ),
             ),
             appBar: AppBar(
               title: Text("Home"),
-              backgroundColor: Colors.orangeAccent,
+              backgroundColor: const Color.fromARGB(255, 83, 179, 168),
             ),
           )),
     );
@@ -140,14 +181,53 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: ListView.builder(
         itemCount: controller.prayerTimes.length,
         itemBuilder: (context, index) {
-          return Center(
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Card(
-              child: ListTile(
-                title: Text(controller.getPrayerName(index)),
-                subtitle: Text(controller.prayerTimes[index]),
+              color: controller.isDark.isTrue
+                  ? const Color.fromARGB(255, 57, 56, 56)
+                  : null, // Set color only when isDark is true
+              elevation: 3,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'images/PrayerTime${index.toString()}.png', // Replace 'prayer_icon.png' with your icon asset path
+                      width: 24, // Adjust width as needed
+                      height: 24, // Adjust height as needed
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            controller.getPrayerName(index),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          //SizedBox(height: 4),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      controller.prayerTimes[index],
+                      style: TextStyle(
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
