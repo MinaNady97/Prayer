@@ -1,10 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
@@ -24,7 +27,11 @@ import 'package:flutter_background_service_android/flutter_background_service_an
 
 @pragma('vm:entry-point')
 void onstart(ServiceInstance service) async {
+  DartPluginRegistrant.ensureInitialized();
   final MainController control = Get.put(MainController());
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
   service.on('stopService').listen((event) async {
     await service.stopSelf();
     control.enable_sound();
@@ -33,7 +40,7 @@ void onstart(ServiceInstance service) async {
   String aftertime = "";
 
   Timer.periodic(
-    const Duration(seconds: 3),
+    const Duration(seconds: 5),
     (timer) async {
       var now = DateTime.now();
       String currentTime =
@@ -50,11 +57,21 @@ void onstart(ServiceInstance service) async {
       if (key != null && control.flag == true) {
         print('The key for the value is: $key');
 
-        control.checkLocation();
-
-        try {
-          await control.get_times_from_DB();
-
+        var checked = await control.checkLocation();
+        if (checked) {
+          try {
+            await control.get_times_from_DB();
+          } catch (e) {
+            Get.snackbar(
+              'No Internet', // Title of the snackbar
+              'cant get the time for iqama, using defult value', // Message of the snackbar
+              snackPosition: SnackPosition.BOTTOM, // Position of the snackbar
+              backgroundColor:
+                  Colors.grey[800], // Background color of the snackbar
+              colorText: Colors.white, // Text color of the snackbar
+              duration: Duration(seconds: 3),
+            );
+          }
           var m = ((int.parse(control.constants[0]["times"][key]) % 60) +
                   now.minute) %
               60;
@@ -75,34 +92,54 @@ void onstart(ServiceInstance service) async {
               '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
 
           control.flag = false;
-        } catch (e) {
-          //print("eroor2");
-          control.flag = true;
         }
       } else if (currentTime.trim() == aftertime.trim() &&
           control.flag == false) {
         //print("here 2");
         control.enable_sound();
         control.flag = true;
+        aftertime = "";
       }
+
       if (service is AndroidServiceInstance) {
         if (await service.isForegroundService()) {
           List closest_prayer_time = control.findClosestPrayerTime();
           String _content = "";
           try {
             var index = control.prayerTimes.indexOf(closest_prayer_time[0]);
+            print(
+                "gggggggggggggggggggggggggggggggggggggggggg${control.getPrayerName(index)}");
             _content =
                 "${control.getPrayerName(index)} remains: ${closest_prayer_time[1]}h : ${closest_prayer_time[2]}m";
           } catch (e) {
             print("here");
           }
-          // if you don't using custom notification, uncomment this
-          service.setForegroundNotificationInfo(
-            title: "ISBC",
-            content: _content,
+          flutterLocalNotificationsPlugin.show(
+            888,
+            'ICBC',
+            _content,
+            const NotificationDetails(
+              android: AndroidNotificationDetails(
+                'ICBC',
+                'ICBC SERVICE',
+                icon: 'yh',
+                ongoing: true,
+              ),
+            ),
           );
+          // if you don't using custom notification, uncomment this
+          // service.setForegroundNotificationInfo(
+          //   title: "ICBC",
+          //   content: _content,
+          // );
         }
       }
+      // service.invoke(
+      //   'update',
+      //   {
+      //     "current_date": DateTime.now().toIso8601String(),
+      //   },
+      // );
     },
   );
 }
@@ -211,7 +248,7 @@ class MainController extends GetxController {
     }
   }
 
-  void checkLocation() async {
+  Future<bool> checkLocation() async {
     try {
       for (var location in coordinates) {
         targetLatitude = location["lat"];
@@ -228,14 +265,26 @@ class MainController extends GetxController {
           try {
             await SoundMode.setSoundMode(RingerModeStatus.silent);
             print("soind muted");
-            break;
+            return true;
           } on PlatformException {
             print('Please enable permissions required');
+            Get.snackbar(
+              'permissions', // Title of the snackbar
+              'Please enable Dontditrub required', // Message of the snackbar
+              snackPosition: SnackPosition.BOTTOM, // Position of the snackbar
+              backgroundColor:
+                  Colors.grey[800], // Background color of the snackbar
+              colorText: Colors.white, // Text color of the snackbar
+              duration: Duration(seconds: 3),
+            );
+            return false;
           }
         }
       }
+      return false;
     } catch (e) {
       print("Error getting location: $e");
+      return false;
     }
   }
 
@@ -311,10 +360,63 @@ class MainController extends GetxController {
     return null;
   }
 
+  // Future<void> initializeService() async {
+  //   service = FlutterBackgroundService();
+  //   isRunning = await service.isRunning();
+  //   service_is_runing.value = isRunning;
+  //   await service.configure(
+  //     androidConfiguration: AndroidConfiguration(
+  //       // this will be executed when app is in foreground or background in separated isolate
+  //       onStart: onstart,
+
+  //       // auto start service
+  //       autoStart: false,
+  //       isForegroundMode: true,
+  //     ),
+  //     iosConfiguration: IosConfiguration(
+  //       // auto start service
+  //       autoStart: false,
+
+  //       // this will be executed when app is in foreground in separated isolate
+  //       onForeground: onstart,
+
+  //       // you have to enable background fetch capability on xcode project
+  //       //onBackground: onIosBackground,
+  //     ),
+  //   );
+  // }
+
   Future<void> initializeService() async {
     service = FlutterBackgroundService();
     isRunning = await service.isRunning();
     service_is_runing.value = isRunning;
+
+    /// OPTIONAL, using custom notification channel id
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'ICBC', // id
+      'ICBC SERVICE', // title
+      description:
+          'This channel is used for important notifications.', // description
+      importance: Importance.low, // importance must be at low or higher level
+    );
+
+    final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+        FlutterLocalNotificationsPlugin();
+
+    if (Platform.isAndroid) {
+      await flutterLocalNotificationsPlugin.initialize(
+        const InitializationSettings(
+          //iOS: DarwinInitializationSettings(),
+          android: AndroidInitializationSettings('yh'),
+        ),
+      );
+    }
+
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+
     await service.configure(
       androidConfiguration: AndroidConfiguration(
         // this will be executed when app is in foreground or background in separated isolate
@@ -323,10 +425,15 @@ class MainController extends GetxController {
         // auto start service
         autoStart: false,
         isForegroundMode: true,
+
+        notificationChannelId: 'ICBC',
+        initialNotificationTitle: 'ICBC SERVICE',
+        initialNotificationContent: 'Initializing',
+        foregroundServiceNotificationId: 888,
       ),
       iosConfiguration: IosConfiguration(
         // auto start service
-        autoStart: false,
+        autoStart: true,
 
         // this will be executed when app is in foreground in separated isolate
         onForeground: onstart,

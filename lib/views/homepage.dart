@@ -209,7 +209,13 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                           //SizedBox(height: 4),
                         ],
                       ),
-                    ),
+                    ),                    
+                    // Text(
+                    //   controller.constants[0]["times"][controller.getPrayerName(index)],
+                    //   style: TextStyle(
+                    //     fontSize: 14,
+                    //   ),
+                    // ),
                     Text(
                       controller.prayerTimes[index],
                       style: TextStyle(
