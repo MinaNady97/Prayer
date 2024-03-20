@@ -36,9 +36,14 @@ void onstart(ServiceInstance service) async {
     await service.stopSelf();
     control.enable_sound();
   });
-
-  String aftertime = "";
-
+  var counter = 0;
+  var first_time_flag = true;
+  var start_flag = false;
+  String? key = null;
+  var time_interval = 999999999999999999;
+  var time_of_aqama_of_current_prayer = 0;
+  var closest_prayer_time_now;
+  List closest_prayer_time_now_list;
   Timer.periodic(
     const Duration(seconds: 5),
     (timer) async {
@@ -46,15 +51,53 @@ void onstart(ServiceInstance service) async {
       String currentTime =
           '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
 
-      String? key;
-
-      if (control.prayerTimes.contains(currentTime)) {
-        key = control.getPrayerName(control.prayerTimes.indexOf(currentTime));
+      if (first_time_flag) {
+        closest_prayer_time_now_list = control.findClosestPrayerTime_abs();
+        if (closest_prayer_time_now_list[2] < 30) {
+          var index =
+              control.prayerTimes.indexOf(closest_prayer_time_now_list[0]);
+          closest_prayer_time_now = control.getPrayerName(index);
+          counter++;
+          if (counter == 2) {
+            first_time_flag = false;
+          }
+          print("first timeeeeeeeeeeeeeeeeeeeeeeeeee");
+        }
       } else {
-        key = null;
+        closest_prayer_time_now_list = control.findClosestPrayerTime();
+        var index =
+            control.prayerTimes.indexOf(closest_prayer_time_now_list[0]);
+        closest_prayer_time_now = control.getPrayerName(index);
       }
 
-      if (key != null && control.flag == true) {
+      print("closest_prayer_time_now $closest_prayer_time_now");
+
+      try {
+        if (closest_prayer_time_now_list[1] == 0 &&
+            closest_prayer_time_now_list[2] <=
+                int.parse(
+                    control.constants[0]["times"][closest_prayer_time_now])) {
+          key = closest_prayer_time_now;
+        }
+      } catch (e) {}
+      print("key :$key");
+
+      try {
+        if (key != null)
+          time_interval = control.find_intrval_bet_now__and_PrayerTime(
+              control.getPrayerindex(key!))[1];
+        time_of_aqama_of_current_prayer =
+            int.parse(control.constants[0]["times"][key]) + 15;
+      } catch (e) {}
+
+      print("control flag ${control.flag}");
+      print("time interval:" + time_interval.toString());
+      print("time fo aqama:$time_of_aqama_of_current_prayer");
+
+      if (key != null &&
+          control.flag == true &&
+          time_interval <= time_of_aqama_of_current_prayer &&
+          time_interval >= int.parse(control.constants[0]["times"][key])) {
         print('The key for the value is: $key');
 
         var checked = await control.checkLocation();
@@ -72,45 +115,41 @@ void onstart(ServiceInstance service) async {
               duration: Duration(seconds: 3),
             );
           }
-          var m = ((int.parse(control.constants[0]["times"][key]) % 60) +
-                  now.minute) %
-              60;
-
-          var v = ((int.parse(control.constants[0]["times"][key]) % 60) +
-                  now.minute) ~/
-              60;
-
-          var h = (int.parse(control.constants[0]["times"][key]) ~/ 60) +
-              now.hour +
-              v;
-
-          if (h >= 24) {
-            h = h % 24;
-          }
-
-          aftertime =
-              '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
 
           control.flag = false;
+          start_flag = true;
         }
-      } else if (currentTime.trim() == aftertime.trim() &&
+      } else if (time_interval > time_of_aqama_of_current_prayer &&
           control.flag == false) {
         //print("here 2");
+        time_of_aqama_of_current_prayer = 0;
         control.enable_sound();
         control.flag = true;
-        aftertime = "";
+        time_interval = 999999999999999999;
+        key = null;
+      } else if (key != null &&
+          start_flag == true &&
+          time_interval > time_of_aqama_of_current_prayer) {
+        control.flag = true;
+        key = null;
+        time_of_aqama_of_current_prayer = 0;
+        time_interval = 999999999999999999;
       }
-
       if (service is AndroidServiceInstance) {
         if (await service.isForegroundService()) {
           List closest_prayer_time = control.findClosestPrayerTime();
           String _content = "";
           try {
             var index = control.prayerTimes.indexOf(closest_prayer_time[0]);
-            print(
-                "gggggggggggggggggggggggggggggggggggggggggg${control.getPrayerName(index)}");
-            _content =
-                "${control.getPrayerName(index)} remains: ${closest_prayer_time[1]}h : ${closest_prayer_time[2]}m";
+            if (key != null &&
+                time_interval < time_of_aqama_of_current_prayer - 15 &&
+                time_interval > 0) {
+              _content =
+                  "${control.getPrayerName(index)} remains: ${closest_prayer_time[1]}h : ${closest_prayer_time[2]}m\n the $key aqama after ${time_of_aqama_of_current_prayer - 15 - time_interval}";
+            } else {
+              _content =
+                  "${control.getPrayerName(index)} remains: ${closest_prayer_time[1]}h : ${closest_prayer_time[2]}m\n";
+            }
           } catch (e) {
             print("here");
           }
@@ -127,19 +166,8 @@ void onstart(ServiceInstance service) async {
               ),
             ),
           );
-          // if you don't using custom notification, uncomment this
-          // service.setForegroundNotificationInfo(
-          //   title: "ICBC",
-          //   content: _content,
-          // );
         }
       }
-      // service.invoke(
-      //   'update',
-      //   {
-      //     "current_date": DateTime.now().toIso8601String(),
-      //   },
-      // );
     },
   );
 }
@@ -250,11 +278,11 @@ class MainController extends GetxController {
 
   Future<bool> checkLocation() async {
     try {
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.best);
       for (var location in coordinates) {
         targetLatitude = location["lat"];
         targetLongitude = location["long"];
-        Position position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.best);
         double distanceInMeters = await Geolocator.distanceBetween(
           position.latitude,
           position.longitude,
@@ -446,7 +474,7 @@ class MainController extends GetxController {
 
   List findClosestPrayerTime() {
     final now = DateTime.now();
-    String closestKey = "loading";
+    String closestKey = "Fajr";
     int closestDiffInMinutes =
         999999999999999999; // Initialize with maximum positive value
     var index = 0;
@@ -460,7 +488,7 @@ class MainController extends GetxController {
     for (var x in prayerTimes) {
       final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
           .parse('${now.year}-${now.month}-${now.day + index} ${x}');
-      final timeDiffInMinutes = (prayerTime.difference(now).inMinutes);
+      final timeDiffInMinutes = (prayerTime.difference(now).inMinutes) + 1;
 
       // Check if prayer time is in the future (positive difference)
       if (timeDiffInMinutes > 0 && timeDiffInMinutes < closestDiffInMinutes) {
@@ -470,9 +498,53 @@ class MainController extends GetxController {
     }
     // Convert the closest time difference to hours and remaining minutes
     final hours = closestDiffInMinutes ~/ 60;
-    final remainingMinutes = closestDiffInMinutes % 60 + 1;
+    final remainingMinutes = closestDiffInMinutes % 60;
 
     return [closestKey, hours, remainingMinutes];
+  }
+
+  List findClosestPrayerTime_abs() {
+    final now = DateTime.now();
+    String closestKey = "Fajr";
+    int closestDiffInMinutes =
+        999999999999999999; // Initialize with maximum positive value
+    var index = 0;
+
+    if (now.hour > int.parse(prayerTimes[4].split(":")[0]) ||
+        (now.hour == int.parse(prayerTimes[4].split(":")[0]) &&
+            now.minute >= int.parse(prayerTimes[4].split(":")[1]))) {
+      index = 1;
+    }
+
+    for (var x in prayerTimes) {
+      final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
+          .parse('${now.year}-${now.month}-${now.day + index} ${x}');
+      final timeDiffInMinutes = (prayerTime.difference(now).inMinutes.abs());
+
+      // Check if prayer time is in the future (positive difference)
+      if (timeDiffInMinutes > 0 && timeDiffInMinutes < closestDiffInMinutes) {
+        closestKey = x;
+        closestDiffInMinutes = timeDiffInMinutes;
+      }
+    }
+    // Convert the closest time difference to hours and remaining minutes
+    final hours = closestDiffInMinutes ~/ 60;
+    final remainingMinutes = closestDiffInMinutes % 60;
+
+    return [closestKey, hours, remainingMinutes];
+  }
+
+  List find_intrval_bet_now__and_PrayerTime(int index) {
+    final now = DateTime.now();
+
+    final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
+        .parse('${now.year}-${now.month}-${now.day} ${prayerTimes[index]}');
+    final timeDiffInMinutes = (now.difference(prayerTime).inMinutes);
+
+    final hours = timeDiffInMinutes ~/ 60;
+    final remainingMinutes = timeDiffInMinutes % 60;
+    print(remainingMinutes);
+    return [hours, remainingMinutes];
   }
 
   // Function to handle notification click event
@@ -552,6 +624,23 @@ class MainController extends GetxController {
     }
   }
 
+  int getPrayerindex(String name) {
+    switch (name) {
+      case 'Fajr':
+        return 0;
+      case 'Dhuhr':
+        return 1;
+      case 'Asr':
+        return 2;
+      case 'Maghrib':
+        return 3;
+      case 'Isha':
+        return 4;
+      default:
+        return 0;
+    }
+  }
+
   void updateTime() {
     // Update the current time
 
@@ -559,3 +648,24 @@ class MainController extends GetxController {
         '${addLeadingZero(DateTime.now().hour)} : ${addLeadingZero(DateTime.now().minute)}';
   }
 }
+
+
+
+// var m = ((int.parse(control.constants[0]["times"][key]) % 60) +
+          //         now.minute) %
+          //     60;
+
+          // var v = ((int.parse(control.constants[0]["times"][key]) % 60) +
+          //         now.minute) ~/
+          //     60;
+
+          // var h = (int.parse(control.constants[0]["times"][key]) ~/ 60) +
+          //     now.hour +
+          //     v;
+
+          // if (h >= 24) {
+          //   h = h % 24;
+          // }
+
+          // aftertime =
+          //     '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
