@@ -8,6 +8,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:sametsalah/views/notifications_detialspage.dart';
 // Assuming you have a notification_controllerImp class
 //notification_controllerImp controller = Get.put(notification_controllerImp());
+import 'package:get/get.dart';
+import 'package:sametsalah/controllers/home_controller.dart';
+
+final MainController _controller = Get.put(MainController());
 
 class NotificationPage extends StatefulWidget {
   @override
@@ -37,8 +41,14 @@ class _NotificationsListPageState extends State<NotificationPage> {
     controller = Get.put(notification_controllerImp());
     return Scaffold(
         appBar: AppBar(
-          title: Text("Notifications Page"),
-          backgroundColor: const Color.fromARGB(255, 83, 179, 168),
+          iconTheme: IconThemeData(color: Colors.white),
+          title: Text(
+            "Notifications Page",
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: _controller.isDark.isTrue
+              ? _controller.primary_dark_color
+              : _controller.primary_light_color,
         ),
         body: StreamBuilder<QuerySnapshot>(
           stream: controller
@@ -131,6 +141,7 @@ class Custoum_notification_card extends StatelessWidget {
                     ),
                     Flexible(
                       child: Text(
+                        maxLines: 3,
                         body,
                         style: const TextStyle(
                           overflow: TextOverflow.ellipsis,

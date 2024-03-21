@@ -6,17 +6,21 @@ import '../other/custombuttonauth.dart';
 import '../other/customtextfieldauth.dart';
 import '../other/logoimage.dart';
 
+import 'package:sametsalah/controllers/home_controller.dart';
+
+final MainController controller = Get.put(MainController());
+
 class LoginPage extends StatelessWidget {
   const LoginPage({Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
-    LoginControllerImp controller = Get.put(LoginControllerImp());
+    LoginControllerImp controller_ = Get.put(LoginControllerImp());
     final double w = Get.width;
     final double h = Get.height;
     return SafeArea(
         child: Scaffold(
       body: Form(
-        key: controller.formstate,
+        key: controller_.formstate,
         child: SingleChildScrollView(
           child: Column(
             children: [
@@ -29,7 +33,9 @@ class LoginPage extends StatelessWidget {
                     Text(
                       "Login for Admin",
                       style: TextStyle(
-                          color: const Color.fromARGB(255, 83, 179, 168),
+                          color: controller.isDark.isTrue
+                              ? controller.primary_dark_color
+                              : controller.primary_light_color,
                           fontSize: 45,
                           fontWeight: FontWeight.bold,
                           fontFamily: 'Poppins'),
@@ -51,13 +57,13 @@ class LoginPage extends StatelessWidget {
                       label: "user name",
                       hinttext: "enter your user name",
                       icondata: Icons.email_outlined,
-                      mycontroller: controller.email,
+                      mycontroller: controller_.email,
                     ),
                     CustomTextFieldAuth(
                       isNumber: false,
-                      isPassword: controller.isshowpass,
+                      isPassword: controller_.isshowpass,
                       ontapicon: () {
-                        controller.showpass();
+                        controller_.showpass();
                       },
                       valid: (value) {
                         return validatefunc_input(value!, 5, 30, "password");
@@ -65,13 +71,13 @@ class LoginPage extends StatelessWidget {
                       label: "password",
                       hinttext: "Enter your Password",
                       icondata: Icons.lock_clock_outlined,
-                      mycontroller: controller.password,
+                      mycontroller: controller_.password,
                     ),
                     CustomButtonAuth(
-                      widthh: w,
+                      width: w,
                       text: "login",
                       onpressed: () {
-                        controller.login();
+                        controller_.login();
                       },
                     ),
                     const SizedBox(

@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:sametsalah/controllers/home_controller.dart';
+
+final MainController controller = Get.put(MainController());
 
 class CustomTextFieldAuth extends StatelessWidget {
   final String hinttext;
@@ -25,9 +29,11 @@ class CustomTextFieldAuth extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 7.0),
       child: Container(
-        height: 70,
+        height: 50,
         child: TextFormField(
-          cursorColor: const Color.fromARGB(255, 83, 179, 168),
+          cursorColor: controller.isDark.isTrue
+              ? controller.primary_dark_color
+              : controller.primary_light_color,
           textDirection: TextDirection.ltr,
           textAlign: TextAlign.left,
           controller: mycontroller,
@@ -36,10 +42,14 @@ class CustomTextFieldAuth extends StatelessWidget {
           validator: valid,
           decoration: InputDecoration(
             focusedBorder: OutlineInputBorder(
-                borderSide:
-                    BorderSide(color: const Color.fromARGB(255, 83, 179, 168)),
+                borderSide: BorderSide(
+                    color: controller.isDark.isTrue
+                        ? controller.primary_dark_color
+                        : controller.primary_light_color),
                 borderRadius: BorderRadius.circular(30)),
-            iconColor: const Color.fromARGB(255, 83, 179, 168),
+            iconColor: controller.isDark.isTrue
+                ? controller.primary_dark_color
+                : controller.primary_light_color,
             isDense: true,
             fillColor: Colors.grey,
             filled: true,
@@ -50,32 +60,26 @@ class CustomTextFieldAuth extends StatelessWidget {
             ),
             floatingLabelBehavior: FloatingLabelBehavior.always,
             contentPadding: EdgeInsets.symmetric(vertical: 5, horizontal: 20),
-            label: Container(
-              padding: EdgeInsets.only(left: 4),
-              margin: EdgeInsets.symmetric(horizontal: 0),
-              child: Text(
-                label,
-                style: TextStyle(
-                    fontSize: 20,
-                    color: const Color.fromARGB(255, 83, 179, 168),
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Poppins'),
-              ),
-            ),
             suffixIcon: InkWell(
               child: Icon(
                 icondata,
-                color: const Color.fromARGB(255, 83, 179, 168),
+                color: controller.isDark.isTrue
+                    ? controller.primary_dark_color
+                    : controller.primary_light_color,
               ),
               onTap: ontapicon,
             ),
             enabledBorder: OutlineInputBorder(
-                borderSide:
-                    BorderSide(color: const Color.fromARGB(255, 83, 179, 168)),
+                borderSide: BorderSide(
+                    color: controller.isDark.isTrue
+                        ? controller.primary_dark_color
+                        : controller.primary_light_color),
                 borderRadius: BorderRadius.circular(30)),
             border: OutlineInputBorder(
-                borderSide:
-                    BorderSide(color: const Color.fromARGB(255, 83, 179, 168)),
+                borderSide: BorderSide(
+                    color: controller.isDark.isTrue
+                        ? controller.primary_dark_color
+                        : controller.primary_light_color),
                 borderRadius: BorderRadius.circular(30)),
           ),
         ),

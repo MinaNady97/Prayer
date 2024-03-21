@@ -4,6 +4,11 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:photo_view/photo_view.dart';
 
+import 'package:get/get.dart';
+import 'package:sametsalah/controllers/home_controller.dart';
+
+final MainController controller = Get.put(MainController());
+
 class NotificationsDetialsPageState extends StatefulWidget {
   final String imageUrl;
   final String title;
@@ -29,8 +34,11 @@ class _NotificationsListPageState extends State<NotificationsDetialsPageState> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Details Page"),
-        backgroundColor: const Color.fromARGB(255, 83, 179, 168),
+        iconTheme: IconThemeData(color: Colors.white),
+        title: Text("Details Page", style: TextStyle(color: Colors.white)),
+        backgroundColor: controller.isDark.isTrue
+            ? controller.primary_dark_color
+            : controller.primary_light_color,
       ),
       body: Center(
         child: Column(
@@ -82,11 +90,13 @@ class _NotificationsListPageState extends State<NotificationsDetialsPageState> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    widget.title,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                  Center(
+                    child: Text(
+                      widget.title,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   SizedBox(height: 10),

@@ -19,216 +19,272 @@ class MyApp extends StatelessWidget {
     });
     return Obx(
       () => GetMaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Prayer Times',
-          theme:
-              controller.isDark.isTrue ? ThemeData.dark() : ThemeData.light(),
-          home: Scaffold(
-            drawer: Drawer(
-              surfaceTintColor: Colors.orangeAccent,
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: <Widget>[
-                  DrawerHeader(
-                    child: Row(
-                      children: [
-                        Image.asset(
-                          "images/yh.png",
-                          height: 100,
-                          width: 100,
-                        ),
-                      ],
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color.fromARGB(255, 83, 179, 168),
-                    ),
+        debugShowCheckedModeBanner: false,
+        title: 'Prayer Times',
+        theme: controller.isDark.isTrue ? ThemeData.dark() : ThemeData.light(),
+        home: Scaffold(
+          drawer: Drawer(
+            surfaceTintColor: controller.isDark.isTrue
+                ? controller.primary_dark_color
+                : controller.primary_light_color,
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: <Widget>[
+                DrawerHeader(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        "images/yh.png",
+                        height: 100,
+                        width: 100,
+                      ),
+                    ],
                   ),
-                  ListTile(
-                    title: Text('Theme'),
-                    trailing: Obx(() => Switch(
-                          value: controller.isDark.value,
-                          onChanged: (bool value) {
-                            controller.changeTheme(value);
-                          },
-                        )),
+                  decoration: BoxDecoration(
+                    color: controller.isDark.isTrue
+                        ? controller.primary_dark_color
+                        : controller.primary_light_color,
                   ),
-                  ListTile(
-                    title: Text('Auto Silent'),
-                    trailing: Switch(
-                      value: controller
-                          .service_is_runing.value, // Placeholder value
-                      onChanged: (bool value) async {
-                        controller.isRunning = await service.isRunning();
-                        if (controller.isRunning) {
-                          controller.change_service_statu(false);
-                          service.invoke("stopService");
-                          await controller.enable_sound();
-                          controller.flag = true;
-                          print("hereeeeeeeeeeeeeeeeeeeeee");
-                        } else {
-                          service.startService();
-                          controller.change_service_statu(true);
-                        }
-                      },
-                    ),
-                  ),
-                  InkWell(
-                      onTap: () {
-                        Get.to(LoginPage());
-                      },
-                      child: ListTile(
-                        title: Text("Login As Admin"),
-                        trailing: Icon(
-                          Icons.manage_accounts_rounded,
-                        ),
+                ),
+                ListTile(
+                  title: Text('Dark Theme'),
+                  trailing: Obx(() => Switch(
+                        value: controller.isDark.value,
+                        onChanged: (bool value) {
+                          controller.changeTheme(value);
+                        },
                       )),
-                  InkWell(
-                      onTap: () {
-                        Get.to(NotificationPage());
-                      },
-                      child: ListTile(
-                        title: Text("Notifications"),
-                        trailing: Icon(
-                          Icons.notifications_active_sharp,
-                        ),
-                      ))
-                ],
-              ),
+                ),
+                ListTile(
+                  title: Text('Auto Silent'),
+                  trailing: Switch(
+                    value:
+                        controller.service_is_runing.value, // Placeholder value
+                    onChanged: (bool value) async {
+                      controller.isRunning = await service.isRunning();
+                      if (controller.isRunning) {
+                        controller.change_service_statu(false);
+                        service.invoke("stopService");
+                        await controller.enable_sound();
+                        controller.flag = true;
+                        print("hereeeeeeeeeeeeeeeeeeeeee");
+                      } else {
+                        service.startService();
+                        controller.change_service_statu(true);
+                      }
+                    },
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
+                    Get.to(LoginPage());
+                  },
+                  child: ListTile(
+                    title: Text("Login As Admin"),
+                    trailing: Icon(
+                      Icons.manage_accounts_rounded,
+                    ),
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
+                    Get.to(NotificationPage());
+                  },
+                  child: ListTile(
+                    title: Text("Notifications"),
+                    trailing: Icon(
+                      Icons.notifications_active_sharp,
+                    ),
+                  ),
+                )
+              ],
             ),
-            body: Container(
-              decoration: BoxDecoration(
+          ),
+          body: Stack(
+            children: [
+              Container(
+                decoration: BoxDecoration(
                   image: DecorationImage(
-                      image: AssetImage("images/${controller.theme_value}.png"),
-                      fit: BoxFit.cover)),
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: 90,
+                    image: AssetImage("images/${controller.theme_value}.jpg"),
+                    fit: BoxFit.cover,
                   ),
-                  Text(
-                    controller.dayName,
-                    style: TextStyle(fontSize: 23),
-                  ),
-                  SizedBox(
-                    height: 8,
-                  ),
-                  Text(
-                    controller.hijriDate,
-                    style: TextStyle(fontSize: 15),
-                  ),
-                  Text(controller.gregorianDateDisplay,
-                      style: TextStyle(fontSize: 15)),
-                  Text(
-                    controller.currentTime.value,
-                    style: TextStyle(fontSize: 60),
-                  ),
-                  Text(
-                      "سَمِعْنَا وَأَطَعْنَا ۖ غُفْرَانَكَ رَبَّنَا وَإِلَيْكَ الْمَصِيرُ"),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  Text(
-                    "Islamic Center of Brushy Creek",
-                    style: TextStyle(fontSize: 15),
-                  ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  Expanded(child: PrayerTimesPage()),
-                ],
+                ),
               ),
-            ),
-            appBar: AppBar(
-              // title: Text("Home"),
-              backgroundColor: const Color.fromARGB(255, 83, 179, 168),
-            ),
-          )),
-    );
-  }
-}
-
-class PrayerTimesPage extends StatefulWidget {
-  @override
-  _PrayerTimesPageState createState() => _PrayerTimesPageState();
-}
-
-class _PrayerTimesPageState extends State<PrayerTimesPage> {
-  // String location = 'Texas'; // Change to your desired location
-  // String method =
-  //     '2'; // Change the method according to your preference, check API documentation for available methods
-  // String apiUrl = ''; // Declare apiUrl variable here
-
-  // 5 prayer times
-
-  @override
-  void initState() {
-    print("main init");
-    super.initState();
-    print("main init 2");
-    controller.fetchPrayerTimings();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: ListView.builder(
-        itemCount: controller.prayerTimes.length,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Card(
-              color: controller.isDark.isTrue
-                  ? const Color.fromARGB(255, 57, 56, 56)
-                  : null, // Set color only when isDark is true
-              elevation: 3,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Row(
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Image.asset(
-                      'images/PrayerTime${index.toString()}.png', // Replace 'prayer_icon.png' with your icon asset path
-                      width: 24, // Adjust width as needed
-                      height: 24, // Adjust height as needed
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            controller.getPrayerName(index),
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          //SizedBox(height: 4),
-                        ],
-                      ),
-                    ),                    
-                    // Text(
-                    //   controller.constants[0]["times"][controller.getPrayerName(index)],
-                    //   style: TextStyle(
-                    //     fontSize: 14,
-                    //   ),
-                    // ),
                     Text(
-                      controller.prayerTimes[index],
+                      controller.dayName,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontFamily: 'Arial',
+                        fontSize: 17,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
+                    Text(
+                      controller.hijriDate,
+                      style: TextStyle(
+                        fontFamily: 'Arial',
+                        fontSize: 17,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      controller.gregorianDateDisplay,
+                      style: TextStyle(
+                        fontFamily: 'Arial',
+                        fontSize: 17,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      controller.currentTime.value,
+                      style: TextStyle(fontSize: 60),
+                    ),
+                    Text(
+                      "سَمِعْنَا وَأَطَعْنَا ۖ غُفْرَانَكَ رَبَّنَا وَإِلَيْكَ الْمَصِيرُ",
+                      style: TextStyle(
+                        fontFamily: 'Arial',
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      "Islamic Center of Brushy Creek",
+                      style: TextStyle(
+                        fontFamily: 'Arial',
+                        fontSize: 17,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    Container(
+                      height: 290,
+                      child: ListView.builder(
+                        itemCount: controller.prayerTimes.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          return prayertimecard(
+                            index: index,
+                          );
+                        },
+                      ),
+                    )
                   ],
                 ),
               ),
+            ],
+          ),
+          appBar: AppBar(
+            iconTheme: IconThemeData(
+              color: controller.isDark.isTrue
+                  ? Colors.white
+                  : Colors.white, // Change icon color based on theme
             ),
-          );
-        },
+            backgroundColor: controller.isDark.isTrue
+                ? controller.primary_dark_color
+                : controller.primary_light_color,
+          ),
+        ),
       ),
     );
   }
+}
+
+class prayertimecard extends StatelessWidget {
+  int index;
+  prayertimecard({
+    required this.index,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      child: Card(
+        color: controller.isDark.isTrue
+            ? const Color.fromARGB(255, 57, 56, 56)
+            : null, // Set color only when isDark is true
+        elevation: 3,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 10.0),
+          child: Stack(
+            children: [
+              Row(
+                children: [
+                  Image.asset(
+                    'images/PrayerTime${index.toString()}.png', // Replace 'prayer_icon.png' with your icon asset path
+                    width: 24, // Adjust width as needed
+                    height: 24, // Adjust height as needed
+                  ),
+                  SizedBox(
+                    width: 5,
+                  ),
+                  Expanded(
+                    child: Text(
+                      controller.getPrayerName(index),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                  Image.asset(
+                    'images/Azan.png', // Replace 'prayer_icon.png' with your icon asset path
+                    width: 40, // Adjust width as needed
+                    height: 40, // Adjust height as needed
+                  ),
+                  Expanded(
+                    child: Text(
+                      controller.prayerTimes[index],
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Image.asset(
+                    'images/IQAMAH.png', // Replace 'prayer_icon.png' with your icon asset path
+                    width: 40, // Adjust width as needed
+                    height: 40, // Adjust height as needed
+                  ),
+                  Expanded(
+                    child: Text(
+                      combinePrayerTimeWithMinutes(
+                          controller.prayerTimes[index],
+                          int.parse(controller.constants[0]["times"]
+                              [controller.getPrayerName(index)])),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String combinePrayerTimeWithMinutes(String prayerTime, int additionalMinutes) {
+  // Parse the prayer time to a DateTime object
+  DateTime parsedTime = DateTime.parse('2022-01-01 $prayerTime');
+
+  // Add the additional minutes to the prayer time
+  DateTime newTime = parsedTime.add(Duration(minutes: additionalMinutes));
+
+  // Format the new time to HH:mm format
+  String formattedTime =
+      '${newTime.hour.toString().padLeft(2, '0')}:${newTime.minute.toString().padLeft(2, '0')}';
+  print("fffffffffffffffffffffffffffffffffffff");
+  print(formattedTime);
+  // Return the formatted time
+  return formattedTime;
 }

@@ -46,7 +46,7 @@ void onstart(ServiceInstance service) async {
   var closest_prayer_time_now;
   List closest_prayer_time_now_list;
   Timer.periodic(
-    const Duration(seconds: 5),
+    const Duration(seconds: 50),
     (timer) async {
       var now = DateTime.now();
       String currentTime =
@@ -72,13 +72,13 @@ void onstart(ServiceInstance service) async {
       }
 
       print("closest_prayer_time_now $closest_prayer_time_now");
-
+      print("closest_prayer_time_now $closest_prayer_time_now_list[2]");
       try {
         if (closest_prayer_time_now_list[1] == 0 &&
             closest_prayer_time_now_list[2] <=
                 int.parse(control.constants[0]["times"]
-                        [closest_prayer_time_now] +
-                    15)) {
+                        [closest_prayer_time_now]) +
+                    15) {
           key = closest_prayer_time_now;
         }
       } catch (e) {}
@@ -197,15 +197,33 @@ class MainController extends GetxController {
   String theme_value = "dark";
   bool flag_test = false;
   var currentTime = "".obs;
+  Color primary_dark_color = Color.fromARGB(255, 51, 72, 99);
+  Color primary_light_color = Color.fromARGB(255, 1, 50, 90);
 
   void changeTheme(bool value) {
     isDark.value = value;
     if (value) {
       theme_value = "dark";
+      instance.setBool("isDark", true);
     } else {
       theme_value = "light";
+      instance.setBool("isDark", false);
     }
+
     //update();
+  }
+
+  Future<bool> getTheme() async {
+    // Check if instance is not null before trying to get the boolean value
+    if (instance != null) {
+      // Use ?. operator to safely access methods on nullable types
+      return instance!.getBool("isDark") ??
+          false; // Use null-aware operator ?? to provide a default value if "isDark" is not found
+    } else {
+      // Handle the case where instance is null
+      // You might want to return a default value or throw an error, depending on your use case
+      return false; // Default value assuming dark mode is false if SharedPreferences is not initialized
+    }
   }
 
   @override
@@ -493,7 +511,7 @@ class MainController extends GetxController {
       final timeDiffInMinutes = (prayerTime.difference(now).inMinutes) + 1;
 
       // Check if prayer time is in the future (positive difference)
-      if (timeDiffInMinutes > 0 && timeDiffInMinutes < closestDiffInMinutes) {
+      if (timeDiffInMinutes >= 0 && timeDiffInMinutes < closestDiffInMinutes) {
         closestKey = x;
         closestDiffInMinutes = timeDiffInMinutes;
       }
@@ -524,7 +542,7 @@ class MainController extends GetxController {
       final timeDiffInMinutes = (prayerTime.difference(now).inMinutes.abs());
 
       // Check if prayer time is in the future (positive difference)
-      if (timeDiffInMinutes > 0 && timeDiffInMinutes < closestDiffInMinutes) {
+      if (timeDiffInMinutes >= 0 && timeDiffInMinutes < closestDiffInMinutes) {
         closestKey = x;
         closestDiffInMinutes = timeDiffInMinutes;
       }
@@ -661,24 +679,3 @@ class MainController extends GetxController {
     } catch (e) {}
   }
 }
-
-
-
-// var m = ((int.parse(control.constants[0]["times"][key]) % 60) +
-          //         now.minute) %
-          //     60;
-
-          // var v = ((int.parse(control.constants[0]["times"][key]) % 60) +
-          //         now.minute) ~/
-          //     60;
-
-          // var h = (int.parse(control.constants[0]["times"][key]) ~/ 60) +
-          //     now.hour +
-          //     v;
-
-          // if (h >= 24) {
-          //   h = h % 24;
-          // }
-
-          // aftertime =
-          //     '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
