@@ -48,10 +48,6 @@ void onstart(ServiceInstance service) async {
   Timer.periodic(
     const Duration(seconds: 50),
     (timer) async {
-      var now = DateTime.now();
-      String currentTime =
-          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-
       if (first_time_flag) {
         closest_prayer_time_now_list = control.findClosestPrayerTime_abs();
         if (closest_prayer_time_now_list[2] < 30) {
@@ -234,10 +230,11 @@ class MainController extends GetxController {
     );
 
     FirebaseMessaging.instance.subscribeToTopic("users");
-    await stop_battary_obtimized();
+
     await requestPermissionNotification();
     await requestLocationPermission();
     await requestnotifyPermission();
+    await stop_battary_obtimized();
     fcmcofing();
     await get_times_from_DB();
     await get_coordinates_from_DB();
