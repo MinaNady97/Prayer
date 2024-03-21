@@ -51,6 +51,7 @@ Future<void> main() async {
       controller.instance!.clear();
       await controller.fetchPrayerTimingsForMonth();
     }
+    
 
     // Continue with the rest of your code...
   } else {

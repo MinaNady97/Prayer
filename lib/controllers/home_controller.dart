@@ -41,27 +41,30 @@ void onstart(ServiceInstance service) async {
   String? key = null;
   var time_interval = 999999999999999999;
   var time_of_aqama_of_current_prayer = 999999999999999999;
-  var closest_prayer_time_now;
-  List closest_prayer_time_now_list;
+  var closest_prayer_time_now = "";
+  List closest_prayer_time_now_list = [];
   bool times_get = false;
   var sign;
+  String? last_key = "";
   Timer.periodic(
-    const Duration(seconds: 10),
+    const Duration(seconds: 20),
     (timer) async {
       closest_prayer_time_now_list = control.findClosestPrayerTime_abs();
       var index = control.prayerTimes.indexOf(closest_prayer_time_now_list[0]);
       closest_prayer_time_now = control.getPrayerName(index);
 
+      if (closest_prayer_time_now_list[1] == 0 &&
+          closest_prayer_time_now_list[2] <= 40) {
+        key = closest_prayer_time_now;
+      }
+
       print("closest_prayer_time_now $closest_prayer_time_now");
       print("closest_prayer_time_now_in_min $closest_prayer_time_now_list");
 
-      if (closest_prayer_time_now_list[1] == 0 &&
-          closest_prayer_time_now_list[2] <= 60) {
-        key = closest_prayer_time_now;
-      }
       print("key :$key");
+      print("last key $last_key");
 
-      if (key != null) {
+      if (key != null && key != last_key) {
         List time_interval_list = control
             .find_intrval_bet_now__and_PrayerTime(control.getPrayerindex(key!));
         print("time interval list $time_interval_list");
@@ -73,7 +76,7 @@ void onstart(ServiceInstance service) async {
       print("time interval:" + time_interval.toString());
       print("time fo aqama:$time_of_aqama_of_current_prayer");
 
-      if (key != null && control.flag == true) {
+      if (key != null && control.flag == true && key != last_key) {
         print('The key for the value is: $key');
         try {
           if (times_get == false) {
@@ -84,12 +87,15 @@ void onstart(ServiceInstance service) async {
         time_of_aqama_of_current_prayer =
             int.parse(control.constants[0]["times"][key]);
         //print("sign" + sign);
-        if (sign == "+" && time_interval >= time_of_aqama_of_current_prayer) {
+        if (sign == "+" &&
+            time_interval >= time_of_aqama_of_current_prayer &&
+            time_interval <= time_of_aqama_of_current_prayer + 15) {
           var checkd = await control.checkLocation();
           if (checkd) {
             control.flag = false;
           } else if (time_interval > time_of_aqama_of_current_prayer + 15) {
             control.flag = true;
+            last_key = key;
             key = null;
             time_of_aqama_of_current_prayer = 999999999999999999;
             time_interval = 999999999999999999;
@@ -104,6 +110,7 @@ void onstart(ServiceInstance service) async {
         control.enable_sound();
         control.flag = true;
         time_interval = 999999999999999999;
+        last_key = key;
         key = null;
         times_get = false;
       }
@@ -207,14 +214,13 @@ class MainController extends GetxController {
 
     await requestPermissionNotification();
     await requestLocationPermission();
-    await requestnotifyPermission();
+    await stop_battary_obtimized();
 
     fcmcofing();
     await get_times_from_DB();
     await get_coordinates_from_DB();
     await fetchPrayerTimings();
-    await stop_battary_obtimized();
-
+    await requestnotifyPermission();
     super.onInit();
   }
 
@@ -454,7 +460,7 @@ class MainController extends GetxController {
     for (var x in prayerTimes) {
       final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
           .parse('${now.year}-${now.month}-${now.day + index} ${x}');
-      final timeDiffInMinutes = (prayerTime.difference(now).inMinutes) + 1;
+      final timeDiffInMinutes = (prayerTime.difference(now).inMinutes);
 
       // Check if prayer time is in the future (positive difference)
       if (timeDiffInMinutes >= 0 && timeDiffInMinutes < closestDiffInMinutes) {
@@ -464,7 +470,7 @@ class MainController extends GetxController {
     }
     // Convert the closest time difference to hours and remaining minutes
     final hours = closestDiffInMinutes ~/ 60;
-    final remainingMinutes = (closestDiffInMinutes % 60) - 1;
+    final remainingMinutes = (closestDiffInMinutes % 60);
 
     return [closestKey, hours, remainingMinutes];
   }
@@ -474,17 +480,16 @@ class MainController extends GetxController {
     String closestKey = "Fajr";
     int closestDiffInMinutes =
         999999999999999999; // Initialize with maximum positive value
-    var index = 0;
 
-    if (now.hour > int.parse(prayerTimes[4].split(":")[0]) ||
-        (now.hour == int.parse(prayerTimes[4].split(":")[0]) &&
-            now.minute >= int.parse(prayerTimes[4].split(":")[1]))) {
-      index = 1;
-    }
+    // if (now.hour > int.parse(prayerTimes[4].split(":")[0]) ||
+    //     (now.hour == int.parse(prayerTimes[4].split(":")[0]) &&
+    //         now.minute >= int.parse(prayerTimes[4].split(":")[1]))) {
+    //   index = 1;
+    // }
 
     for (var x in prayerTimes) {
       final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
-          .parse('${now.year}-${now.month}-${now.day + index} ${x}');
+          .parse('${now.year}-${now.month}-${now.day} ${x}');
       final timeDiffInMinutes = (prayerTime.difference(now).inMinutes.abs());
 
       // Check if prayer time is in the future (positive difference)
