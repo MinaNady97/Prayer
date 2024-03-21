@@ -24,6 +24,7 @@ import 'package:http/http.dart' as http;
 import 'package:sametsalah/other/firebase_options.dart';
 import 'package:sametsalah/other/fbnotify.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
+import 'package:disable_battery_optimization/disable_battery_optimization.dart';
 
 @pragma('vm:entry-point')
 void onstart(ServiceInstance service) async {
@@ -75,8 +76,9 @@ void onstart(ServiceInstance service) async {
       try {
         if (closest_prayer_time_now_list[1] == 0 &&
             closest_prayer_time_now_list[2] <=
-                int.parse(
-                    control.constants[0]["times"][closest_prayer_time_now])) {
+                int.parse(control.constants[0]["times"]
+                        [closest_prayer_time_now] +
+                    15)) {
           key = closest_prayer_time_now;
         }
       } catch (e) {}
@@ -214,7 +216,7 @@ class MainController extends GetxController {
     );
 
     FirebaseMessaging.instance.subscribeToTopic("users");
-
+    await stop_battary_obtimized();
     await requestPermissionNotification();
     await requestLocationPermission();
     await requestnotifyPermission();
@@ -646,6 +648,17 @@ class MainController extends GetxController {
 
     currentTime.value =
         '${addLeadingZero(DateTime.now().hour)} : ${addLeadingZero(DateTime.now().minute)}';
+  }
+
+  Future<void> stop_battary_obtimized() async {
+    try {
+      bool? isBatteryOptimizationDisabled =
+          await DisableBatteryOptimization.isBatteryOptimizationDisabled;
+      if (isBatteryOptimizationDisabled == false) {
+        await DisableBatteryOptimization
+            .showDisableBatteryOptimizationSettings();
+      }
+    } catch (e) {}
   }
 }
 
