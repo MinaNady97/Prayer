@@ -283,8 +283,6 @@ String combinePrayerTimeWithMinutes(String prayerTime, int additionalMinutes) {
   // Format the new time to HH:mm format
   String formattedTime =
       '${newTime.hour.toString().padLeft(2, '0')}:${newTime.minute.toString().padLeft(2, '0')}';
-  print("fffffffffffffffffffffffffffffffffffff");
-  print(formattedTime);
   // Return the formatted time
   return formattedTime;
 }

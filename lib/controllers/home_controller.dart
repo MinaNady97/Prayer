@@ -204,7 +204,7 @@ class MainController extends GetxController {
     );
 
     FirebaseMessaging.instance.subscribeToTopic("users");
-    await stop_battary_obtimized();
+
     await requestPermissionNotification();
     await requestLocationPermission();
     await requestnotifyPermission();
@@ -213,6 +213,7 @@ class MainController extends GetxController {
     await get_times_from_DB();
     await get_coordinates_from_DB();
     await fetchPrayerTimings();
+    await stop_battary_obtimized();
 
     super.onInit();
   }
@@ -379,32 +380,6 @@ class MainController extends GetxController {
     return null;
   }
 
-  // Future<void> initializeService() async {
-  //   service = FlutterBackgroundService();
-  //   isRunning = await service.isRunning();
-  //   service_is_runing.value = isRunning;
-  //   await service.configure(
-  //     androidConfiguration: AndroidConfiguration(
-  //       // this will be executed when app is in foreground or background in separated isolate
-  //       onStart: onstart,
-
-  //       // auto start service
-  //       autoStart: false,
-  //       isForegroundMode: true,
-  //     ),
-  //     iosConfiguration: IosConfiguration(
-  //       // auto start service
-  //       autoStart: false,
-
-  //       // this will be executed when app is in foreground in separated isolate
-  //       onForeground: onstart,
-
-  //       // you have to enable background fetch capability on xcode project
-  //       //onBackground: onIosBackground,
-  //     ),
-  //   );
-  // }
-
   Future<void> initializeService() async {
     service = FlutterBackgroundService();
     isRunning = await service.isRunning();
@@ -442,7 +417,7 @@ class MainController extends GetxController {
         onStart: onstart,
 
         // auto start service
-        autoStart: false,
+        autoStart: true,
         isForegroundMode: true,
 
         notificationChannelId: 'ICBC',
