@@ -37,9 +37,7 @@ void onstart(ServiceInstance service) async {
     await service.stopSelf();
     control.enable_sound();
   });
-  var counter = 0;
-  var first_time_flag = true;
-  var start_flag = false;
+
   String? key = null;
   var time_interval = 999999999999999999;
   var time_of_aqama_of_current_prayer = 999999999999999999;
@@ -50,23 +48,9 @@ void onstart(ServiceInstance service) async {
   Timer.periodic(
     const Duration(seconds: 10),
     (timer) async {
-      // final now = DateTime.now();
-      // var current_time =
-      //     "${control.addLeadingZero(now.hour)}:${control.addLeadingZero(now.minute)}";
-
-      // if (first_time_flag) {
       closest_prayer_time_now_list = control.findClosestPrayerTime_abs();
       var index = control.prayerTimes.indexOf(closest_prayer_time_now_list[0]);
       closest_prayer_time_now = control.getPrayerName(index);
-      //print("first timeeeeeeeeeeeeeeeeeeeeeeeeee");
-      // } else {
-      //   closest_prayer_time_now_list = control.findClosestPrayerTime();
-      // }
-      // var index = control.prayerTimes.indexOf(closest_prayer_time_now_list[0]);
-      // closest_prayer_time_now = control.getPrayerName(index);
-      // if (counter == 2) {
-      //   first_time_flag = false;
-      // }
 
       print("closest_prayer_time_now $closest_prayer_time_now");
       print("closest_prayer_time_now_in_min $closest_prayer_time_now_list");
