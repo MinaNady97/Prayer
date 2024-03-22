@@ -212,15 +212,11 @@ class MainController extends GetxController {
 
     FirebaseMessaging.instance.subscribeToTopic("users");
 
-    await requestPermissionNotification();
-    await requestLocationPermission();
-    await stop_battary_obtimized();
-
     fcmcofing();
     await get_times_from_DB();
     await get_coordinates_from_DB();
     await fetchPrayerTimings();
-    await requestnotifyPermission();
+
     super.onInit();
   }
 
@@ -423,7 +419,7 @@ class MainController extends GetxController {
         onStart: onstart,
 
         // auto start service
-        autoStart: true,
+        autoStart: false,
         isForegroundMode: true,
 
         notificationChannelId: 'ICBC',
@@ -433,7 +429,7 @@ class MainController extends GetxController {
       ),
       iosConfiguration: IosConfiguration(
         // auto start service
-        autoStart: true,
+        autoStart: false,
 
         // this will be executed when app is in foreground in separated isolate
         onForeground: onstart,

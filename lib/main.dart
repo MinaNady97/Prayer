@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sametsalah/controllers/home_controller.dart';
 import 'package:sametsalah/controllers/PrayerTimesStorage.dart';
+import 'package:sametsalah/other/fbnotify.dart';
 import 'package:sametsalah/other/firebase_options.dart';
 import 'package:sametsalah/views/homepage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -51,7 +52,6 @@ Future<void> main() async {
       controller.instance!.clear();
       await controller.fetchPrayerTimingsForMonth();
     }
-    
 
     // Continue with the rest of your code...
   } else {
@@ -72,6 +72,8 @@ Future<void> main() async {
     controller.theme_value = controller.isDark.isTrue ? "dark" : "light";
   }
   runApp(MyApp());
+  await requestPermissionNotification();
+  await controller.requestLocationPermission();
+  await controller.stop_battary_obtimized();
+  await controller.requestnotifyPermission();
 }
-
-
