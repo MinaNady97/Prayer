@@ -17,6 +17,7 @@ class LoginPage extends StatelessWidget {
     LoginControllerImp controller_ = Get.put(LoginControllerImp());
     final double w = Get.width;
     final double h = Get.height;
+    String theme = controller.isDark.isTrue ? "w" : "r";
     return SafeArea(
         child: Scaffold(
       body: Form(
@@ -44,7 +45,7 @@ class LoginPage extends StatelessWidget {
                     SizedBox(
                       height: 40,
                     ),
-                    LogoImage(path: "images/yh.png"),
+                    LogoImage(path: "images/${theme}icon.png"),
                     SizedBox(
                       height: 15,
                     ),
