@@ -159,7 +159,7 @@ void onstart(ServiceInstance service) async {
                 time_interval < time_of_aqama_of_current_prayer + 15 &&
                 sign == "+") {
               _content =
-                  "${fixed_string}\n the $key your phone will be normal when pray finishes after ${time_of_aqama_of_current_prayer + 15 - time_interval}m\n ";
+                  "${fixed_string}\nyour phone will be normal when  $key pray finishes after ${time_of_aqama_of_current_prayer + 15 - time_interval}m\n ";
             } else {
               _content = fixed_string +
                   " and will be silent after $iqama_time\nif you within 100m";
