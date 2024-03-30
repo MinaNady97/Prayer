@@ -163,7 +163,7 @@ class ManageControllerImp extends ManageController {
     List<DocumentSnapshot> documents = querySnapshot.docs;
 
     // If there are more than 10 documents, delete the last one
-    if (documents.length >= 10) {
+    if (documents.length >= 50) {
       // Delete the last document
       // Delete the last document
       final lastDocumentData = documents.last.data() as Map<String, dynamic>;
