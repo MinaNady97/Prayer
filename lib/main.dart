@@ -1,4 +1,4 @@
- import 'dart:async';
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +22,7 @@ Future<void> main() async {
   );
   try {
     // Initialize the shared preferences instance
-    controller.instance = await SharedPreferences.getInstance();
+    instance = await SharedPreferences.getInstance();
   } catch (e) {
     // Handle any exceptions that occur during initialization
     print('Error initializing SharedPreferences: $e');
@@ -40,7 +40,7 @@ Future<void> main() async {
   final List<dynamic>? storedPrayerTimes_ =
       await PrayerTimesStorage.getPrayerTimesForDate(formattedDate);
 
-  if (controller.instance != null) {
+  if (instance != null) {
     final now_ = DateTime.now();
     final String formattedDate =
         '${controller.addLeadingZero(now_.day)}-${controller.addLeadingZero(now_.month)}-${controller.addLeadingZero(now_.year)}';
@@ -49,7 +49,7 @@ Future<void> main() async {
         await PrayerTimesStorage.getPrayerTimesForDate(formattedDate);
 
     if (storedPrayerTimes_ == null) {
-      controller.instance!.clear();
+      instance!.clear();
       await controller.fetchPrayerTimingsForMonth();
     }
 
@@ -70,6 +70,13 @@ Future<void> main() async {
   } else {
     controller.isDark = RxBool(await controller.getTheme());
     controller.theme_value = controller.isDark.isTrue ? "dark" : "light";
+  }
+  if (instance!.getBool("isNotification") == null) {
+    instance!.setBool("isNotification", true);
+    print("hereeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+    controller.isNotification.value = true;
+  } else {
+    controller.isNotification = RxBool(await controller.getNotificationVlaue());
   }
   runApp(MyApp());
   await requestPermissionNotification();

@@ -6,12 +6,30 @@ import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:http/http.dart';
 import 'package:sametsalah/controllers/home_controller.dart';
 import 'package:sametsalah/main.dart';
+import 'package:sametsalah/views/aboutuspage.dart';
+import 'package:sametsalah/views/contactuspage.dart';
 import 'package:sametsalah/views/loginpage.dart';
 import 'package:sametsalah/views/notificationpage.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/cupertino.dart';
 
 final MainController controller = Get.put(MainController());
 
-class MyApp extends StatelessWidget {
+enum Sky { red, blue }
+
+Map<Sky, Color> skyColors = <Sky, Color>{
+  Sky.red: const Color.fromARGB(255, 127, 41, 53),
+  Sky.blue: const Color.fromARGB(255, 1, 50, 90),
+};
+
+class MyApp extends StatefulWidget {
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  Sky _selectedSegment = Sky.red;
+
   @override
   Widget build(BuildContext context) {
     Timer.periodic(Duration(seconds: 1), (timer) {
@@ -65,16 +83,32 @@ class MyApp extends StatelessWidget {
                       controller.isRunning = await service.isRunning();
                       if (controller.isRunning) {
                         controller.change_service_statu(false);
+                        service.invoke("turnoffNotification");
                         service.invoke("stopService");
                         await controller.enable_sound();
                         controller.flag = true;
+                        controller.turnNotification(false);
                         print("hereeeeeeeeeeeeeeeeeeeeee");
                       } else {
-                        service.startService();
+                        await service.startService();
                         controller.change_service_statu(true);
+                        controller.turnNotification(true);
+                        service.invoke("turnonNotification");
                       }
                     },
                   ),
+                ),
+                ListTile(
+                  title: Text('Notification'),
+                  trailing: Obx(() => Switch(
+                        value: controller.isNotification.value,
+                        onChanged: (bool value) async {
+                          controller.isRunning = await service.isRunning();
+                          if (controller.isRunning) {
+                            controller.turnNotification(value);
+                          }
+                        },
+                      )),
                 ),
                 InkWell(
                   onTap: () {
@@ -89,15 +123,66 @@ class MyApp extends StatelessWidget {
                 ),
                 InkWell(
                   onTap: () {
-                    Get.to(NotificationPage());
+                    Get.to(Contact_Page());
                   },
                   child: ListTile(
-                    title: Text("Notifications"),
+                    title: Text("Contact us"),
                     trailing: Icon(
-                      Icons.notifications_active_sharp,
+                      Icons.contact_page,
                     ),
                   ),
-                )
+                ),
+                InkWell(
+                  onTap: () {
+                    Get.to(About_us_page());
+                  },
+                  child: ListTile(
+                    title: Text("About us"),
+                    trailing: Image(
+                      image: AssetImage(
+                          "images/aboutus_${controller.theme_value}.png"),
+                      width: 27,
+                      height: 27,
+                    ),
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Theme color',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 30),
+                      child: CupertinoSlidingSegmentedControl<Sky>(
+                        thumbColor: skyColors[_selectedSegment]!,
+                        groupValue: _selectedSegment,
+                        onValueChanged: (Sky? value) {
+                          if (value != null) {
+                            setState(() {
+                              _selectedSegment = value;
+                            });
+                            controller.changeThemeColor(value.name);
+                          }
+                        },
+                        children: const <Sky, Widget>{
+                          Sky.red: Text(
+                            'Red',
+                            style: TextStyle(color: CupertinoColors.white),
+                          ),
+                          Sky.blue: Text(
+                            'Blue',
+                            style: TextStyle(color: CupertinoColors.white),
+                          ),
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -106,8 +191,9 @@ class MyApp extends StatelessWidget {
               Container(
                 decoration: BoxDecoration(
                   image: DecorationImage(
-                    image: AssetImage("images/${controller.theme_value}.jpg"),
-                    fit: BoxFit.cover,
+                    image: AssetImage(
+                        "images/${controller.theme_value}_${controller.theme_color}.jpg"),
+                    fit: BoxFit.fill,
                   ),
                 ),
               ),
@@ -179,6 +265,20 @@ class MyApp extends StatelessWidget {
             ],
           ),
           appBar: AppBar(
+            actions: [
+              InkWell(
+                onTap: () async {
+                  Get.to(NotificationPage());
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Icon(
+                    Icons.notifications,
+                    size: 30,
+                  ),
+                ),
+              ),
+            ],
             iconTheme: IconThemeData(
               color: controller.isDark.isTrue
                   ? Colors.white
@@ -255,10 +355,7 @@ class prayertimecard extends StatelessWidget {
                   ),
                   Expanded(
                     child: Text(
-                      combinePrayerTimeWithMinutes(
-                          controller.prayerTimes[index],
-                          int.parse(controller.constants[0]["times"]
-                              [controller.getPrayerName(index)])),
+                      controller.prayerTimes_iqama[index],
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),

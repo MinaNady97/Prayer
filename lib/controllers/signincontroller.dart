@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sametsalah/other/checkinternet.dart';
 
 import '../views/adminpage.dart';
 
@@ -30,26 +31,40 @@ class LoginControllerImp extends LoginController {
 
   login() async {
     try {
-      await get_user_from_DB();
+      String isConnected = await checkInternet();
+      print("neeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeet");
+      print(isConnected);
+      if (isConnected != "nointernet") {
+        await get_user_from_DB();
 
-      var user_name_DB = constants[0]["user_name"];
-      var password_DB = constants[0]["password"];
+        var user_name_DB = constants[0]["user_name"];
+        var password_DB = constants[0]["password"];
 
-      if (formstate.currentState!.validate()) {
-        if (email.text.trim() == user_name_DB &&
-            password.text.trim() == password_DB) {
-          Get.off(ManagePage(), arguments: constants);
-        } else {
-          Get.snackbar(
-            'Alert', // Title of the snackbar
-            'user name or password not is wrong', // Message of the snackbar
-            snackPosition: SnackPosition.BOTTOM, // Position of the snackbar
-            backgroundColor:
-                Colors.grey[800], // Background color of the snackbar
-            colorText: Colors.white, // Text color of the snackbar
-            duration: Duration(seconds: 3),
-          );
+        if (formstate.currentState!.validate()) {
+          if (email.text.trim() == user_name_DB &&
+              password.text.trim() == password_DB) {
+            Get.off(ManagePage(), arguments: constants);
+          } else {
+            Get.snackbar(
+              'Alert', // Title of the snackbar
+              'user name or password not is wrong', // Message of the snackbar
+              snackPosition: SnackPosition.BOTTOM, // Position of the snackbar
+              backgroundColor:
+                  Colors.grey[800], // Background color of the snackbar
+              colorText: Colors.white, // Text color of the snackbar
+              duration: Duration(seconds: 3),
+            );
+          }
         }
+      } else {
+        Get.snackbar(
+          'No internet', // Title of the snackbar
+          'Check your connection and try again.', // Message of the snackbar
+          snackPosition: SnackPosition.BOTTOM, // Position of the snackbar
+          backgroundColor: Colors.grey[800], // Background color of the snackbar
+          colorText: Colors.white, // Text color of the snackbar
+          duration: Duration(seconds: 3),
+        );
       }
     } catch (e) {
       ;

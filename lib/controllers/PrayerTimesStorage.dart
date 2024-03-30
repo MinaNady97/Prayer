@@ -4,12 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 class PrayerTimesStorage {
   static const _keyPrefix = 'prayer_times_';
 
-  static Future<void> savePrayerTimesForDate(String date, List<String> prayerTimes,
+  static Future<void> savePrayerTimesForDate(String date, List<String> prayerTimes, List<String> prayerTimes_iqama,
       String dayName, String gregorianDate, String gregorianDateDisplay, String hijriDate) async {
     final prefs = await SharedPreferences.getInstance();
     final key = '$_keyPrefix${(date)}';
     await prefs.setStringList(key, [
       ...prayerTimes,
+      ...prayerTimes_iqama,
       dayName,
       gregorianDate,
       gregorianDateDisplay,

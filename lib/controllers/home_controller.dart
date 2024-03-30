@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -15,6 +16,7 @@ import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sametsalah/controllers/PrayerTimesStorage.dart';
 import 'package:sametsalah/main.dart';
+import 'package:sametsalah/main.dart';
 import 'package:sametsalah/views/notificationpage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sound_mode/permission_handler.dart';
@@ -25,6 +27,7 @@ import 'package:sametsalah/other/firebase_options.dart';
 import 'package:sametsalah/other/fbnotify.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 import 'package:disable_battery_optimization/disable_battery_optimization.dart';
+import 'package:xml/xml.dart' as xml;
 
 @pragma('vm:entry-point')
 void onstart(ServiceInstance service) async {
@@ -32,12 +35,21 @@ void onstart(ServiceInstance service) async {
   final MainController control = Get.put(MainController());
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+  var isNotification;
 
   service.on('stopService').listen((event) async {
     await service.stopSelf();
     control.enable_sound();
   });
-
+  service.on('turnonNotification').listen((event) async {
+    isNotification = true;
+    print("notifivation on");
+  });
+  service.on('turnoffNotification').listen((event) async {
+    print("notifivation off");
+    isNotification = false;
+  });
+  control.isNotification.value = await control.getNotificationVlaue();
   String? key = null;
   var time_interval = 999999999999999999;
   var time_of_aqama_of_current_prayer = 999999999999999999;
@@ -74,18 +86,13 @@ void onstart(ServiceInstance service) async {
 
       print("control flag ${control.flag}");
       print("time interval:" + time_interval.toString());
-      print("time fo aqama:$time_of_aqama_of_current_prayer");
 
       if (key != null && control.flag == true && key != last_key) {
         print('The key for the value is: $key');
-        try {
-          if (times_get == false) {
-            times_get = true;
-            await control.get_times_from_DB();
-          }
-        } catch (e) {}
+
         time_of_aqama_of_current_prayer =
-            int.parse(control.constants[0]["times"][key]);
+            control.find_intrval_bet_iqama__and_PrayerTime(index)[1];
+        //int.parse(control.constants[0]["times"][key]);
         //print("sign" + sign);
         if (sign == "+" &&
             time_interval >= time_of_aqama_of_current_prayer &&
@@ -114,24 +121,46 @@ void onstart(ServiceInstance service) async {
         key = null;
         times_get = false;
       }
+      print("time fo aqama:$time_of_aqama_of_current_prayer");
+      print(isNotification);
       if (service is AndroidServiceInstance) {
-        if (await service.isForegroundService()) {
+        if (await service.isForegroundService() && isNotification == true) {
+          var min_distance = await control.getmindistance();
           List closest_prayer_time = control.findClosestPrayerTime();
           String _content = "";
           try {
+            var status;
+            var rev_status;
+            if (control.flag == false) {
+              status = "silent";
+              rev_status = "normal";
+            } else {
+              status = "normal";
+              rev_status = "silent";
+            }
             var index = control.prayerTimes.indexOf(closest_prayer_time[0]);
+            var iqama_time = control.find_intrval_bet_now__and_iqamaTime(index);
+            var fixed_string =
+                "${control.getPrayerName(index)} remains: ${closest_prayer_time[1]}h : ${closest_prayer_time[2]}m\nyor distance from ICBC ${min_distance}m\nthe phone now is $status  ";
             if (key != null &&
                 time_interval < time_of_aqama_of_current_prayer &&
                 sign == "+") {
               _content =
-                  "${control.getPrayerName(index)} remains: ${closest_prayer_time[1]}h : ${closest_prayer_time[2]}m\n the $key aqama after ${time_of_aqama_of_current_prayer - time_interval}m";
-            } else {
+                  "${fixed_string} \n  the $key aqama after ${time_of_aqama_of_current_prayer - time_interval}m\nand your phone will be silent \nif you within 100m";
+            } else if (key != null &&
+                time_interval > time_of_aqama_of_current_prayer &&
+                time_interval < time_of_aqama_of_current_prayer + 15 &&
+                sign == "+") {
               _content =
-                  "${control.getPrayerName(index)} remains: ${closest_prayer_time[1]}h : ${closest_prayer_time[2]}m";
+                  "${fixed_string}\n the $key your phone will be normal when pray finishes after ${time_of_aqama_of_current_prayer + 15 - time_interval}m\n ";
+            } else {
+              _content = fixed_string +
+                  " and will be silent after $iqama_time\nif you within 100m";
             }
           } catch (e) {
             print("here");
           }
+          print(_content);
           flutterLocalNotificationsPlugin.show(
             888,
             'ICBC',
@@ -142,10 +171,44 @@ void onstart(ServiceInstance service) async {
                 'ICBC SERVICE',
                 icon: 'yh',
                 ongoing: true,
+                importance: Importance.high,
               ),
             ),
+            payload: _content,
           );
         }
+
+        // if (await service.isForegroundService() && isNotification == true) {
+        //   List closest_prayer_time = control.findClosestPrayerTime();
+        //   String _content = "";
+        //   try {
+        //     var index = control.prayerTimes.indexOf(closest_prayer_time[0]);
+        //     if (key != null &&
+        //         time_interval < time_of_aqama_of_current_prayer &&
+        //         sign == "+") {
+        //       _content =
+        //           "${control.getPrayerName(index)} remains: ${closest_prayer_time[1]}h : ${closest_prayer_time[2]}m\n the $key aqama after ${time_of_aqama_of_current_prayer - time_interval}m";
+        //     } else {
+        //       _content =
+        //           "${control.getPrayerName(index)} remains: ${closest_prayer_time[1]}h : ${closest_prayer_time[2]}m";
+        //     }
+        //   } catch (e) {
+        //     print("here");
+        //   }
+        //   flutterLocalNotificationsPlugin.show(
+        //     888,
+        //     'ICBC',
+        //     _content,
+        //     const NotificationDetails(
+        //       android: AndroidNotificationDetails(
+        //         'ICBC',
+        //         'ICBC SERVICE',
+        //         icon: 'yh',
+        //         ongoing: true,
+        //       ),
+        //     ),
+        //   );
+        // }
       }
     },
   );
@@ -153,10 +216,12 @@ void onstart(ServiceInstance service) async {
 
 class MainController extends GetxController {
   RxBool isDark = true.obs;
+  RxBool isNotification = true.obs;
   RxBool service_is_runing = false.obs;
   List<QueryDocumentSnapshot> constants = [];
   List<QueryDocumentSnapshot> coordinates = [];
   List<String> prayerTimes = List.filled(5, '00:00');
+  List<String> prayerTimes_iqama = List.filled(5, '00:00');
   String formattedDate = "";
   String targetLatitude = "";
   String targetLongitude = "";
@@ -169,25 +234,55 @@ class MainController extends GetxController {
   bool flag = true;
   bool data_month_flag = false;
   bool first_day_flag = true;
-  late SharedPreferences instance;
+  //late SharedPreferences instance;
   List<String> prayerTimes_ = List.filled(5, '');
   String theme_value = "dark";
   bool flag_test = false;
   var currentTime = "".obs;
-  Color primary_dark_color = Color.fromARGB(255, 51, 72, 99);
-  Color primary_light_color = Color.fromARGB(255, 1, 50, 90);
+  String theme_color = "red";
+  // Color primary_dark_color = Color.fromARGB(255, 51, 72, 99);
+  // Color primary_light_color = Color.fromARGB(255, 1, 50, 90);
+  Color primary_dark_color = Color.fromARGB(255, 127, 41, 53);
+  Color primary_light_color = Color.fromARGB(255, 127, 41, 53);
 
   void changeTheme(bool value) {
     isDark.value = value;
     if (value) {
       theme_value = "dark";
-      instance.setBool("isDark", true);
+      instance!.setBool("isDark", true);
     } else {
       theme_value = "light";
-      instance.setBool("isDark", false);
+      instance!.setBool("isDark", false);
     }
+  }
 
-    //update();
+  void changeThemeColor(String value) {
+    if (value == "red") {
+      primary_dark_color = Color.fromARGB(255, 127, 41, 53);
+      primary_light_color = Color.fromARGB(255, 127, 41, 53);
+    } else if (value == "blue") {
+      print("blue");
+      primary_dark_color = Color.fromARGB(255, 51, 72, 99);
+      primary_light_color = Color.fromARGB(255, 1, 50, 90);
+    }
+    theme_color = value;
+  }
+
+  void turnNotification(bool value) {
+    isNotification.value = value;
+    if (value) {
+      print("111111111111111111111");
+      instance!.setBool("isNotification", true);
+      print("2222222222222222222222222");
+      service.invoke("turnonNotification");
+      print("3333333333333333333333333");
+    } else {
+      print("44444444444444444444444");
+      instance!.setBool("isNotification", false);
+      print("5555555555555555555555555");
+      service.invoke("turnoffNotification");
+      print("666666666666666666");
+    }
   }
 
   Future<bool> getTheme() async {
@@ -203,9 +298,23 @@ class MainController extends GetxController {
     }
   }
 
+  Future<bool> getNotificationVlaue() async {
+    // Check if instance is not null before trying to get the boolean value
+    if (instance != null) {
+      // Use ?. operator to safely access methods on nullable types
+      return instance!.getBool("isNotification") ??
+          false; // Use null-aware operator ?? to provide a default value if "isDark" is not found
+    } else {
+      // Handle the case where instance is null
+      // You might want to return a default value or throw an error, depending on your use case
+      return false; // Default value assuming dark mode is false if SharedPreferences is not initialized
+    }
+  }
+
   @override
   Future<void> onInit() async {
     print("first");
+    //isNotification.value = instance.getBool("isNotification")!;
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
@@ -290,15 +399,15 @@ class MainController extends GetxController {
             return true;
           } on PlatformException {
             print('Please enable permissions required');
-            Get.snackbar(
-              'permissions', // Title of the snackbar
-              'Please enable Dontditrub required', // Message of the snackbar
-              snackPosition: SnackPosition.BOTTOM, // Position of the snackbar
-              backgroundColor:
-                  Colors.grey[800], // Background color of the snackbar
-              colorText: Colors.white, // Text color of the snackbar
-              duration: Duration(seconds: 3),
-            );
+            // Get.snackbar(
+            //   'permissions', // Title of the snackbar
+            //   'Please enable Dontditrub required', // Message of the snackbar
+            //   snackPosition: SnackPosition.BOTTOM, // Position of the snackbar
+            //   backgroundColor:
+            //       Colors.grey[800], // Background color of the snackbar
+            //   colorText: Colors.white, // Text color of the snackbar
+            //   duration: Duration(seconds: 3),
+            // );
             return false;
           }
         }
@@ -307,6 +416,33 @@ class MainController extends GetxController {
     } catch (e) {
       print("Error getting location: $e");
       return false;
+    }
+  }
+
+  Future<int?> getmindistance() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.best,
+      );
+
+      double minDistance = double.infinity;
+      for (var location in coordinates) {
+        double targetLatitude = double.parse(location["lat"]);
+        double targetLongitude = double.parse(location["long"]);
+
+        double distanceInMeters = await Geolocator.distanceBetween(
+          position.latitude,
+          position.longitude,
+          targetLatitude,
+          targetLongitude,
+        );
+
+        minDistance = min(minDistance, distanceInMeters);
+      }
+      return minDistance.toInt();
+    } catch (e) {
+      print("Error getting location: $e");
+      return null;
     }
   }
 
@@ -350,12 +486,14 @@ class MainController extends GetxController {
 
       if (storedPrayerTimes != null) {
         // Extract prayer times and additional information from stored data
-        prayerTimes_ = storedPrayerTimes.sublist(0, 5).cast<String>();
+        prayerTimes_ = storedPrayerTimes.sublist(0, 10).cast<String>();
+        print("bfddbfdbffcbcvbvbvbcvbcvbvcbcvbcvcb");
+        print(prayerTimes_);
 
-        dayName = storedPrayerTimes[5];
-        gregorianDate = storedPrayerTimes[6];
-        gregorianDateDisplay = storedPrayerTimes[7];
-        hijriDate = storedPrayerTimes[8];
+        dayName = storedPrayerTimes[10];
+        gregorianDate = storedPrayerTimes[11];
+        gregorianDateDisplay = storedPrayerTimes[12];
+        hijriDate = storedPrayerTimes[13];
 
         // Now you have the prayer times and additional information for the current date
         // You can use this data as needed
@@ -365,6 +503,12 @@ class MainController extends GetxController {
         prayerTimes[2] = prayerTimes_[2].split(" ")[0];
         prayerTimes[3] = prayerTimes_[3].split(" ")[0];
         prayerTimes[4] = prayerTimes_[4].split(" ")[0];
+
+        prayerTimes_iqama[0] = prayerTimes_[5].split(" ")[0];
+        prayerTimes_iqama[1] = prayerTimes_[6].split(" ")[0];
+        prayerTimes_iqama[2] = prayerTimes_[7].split(" ")[0];
+        prayerTimes_iqama[3] = prayerTimes_[8].split(" ")[0];
+        prayerTimes_iqama[4] = prayerTimes_[9].split(" ")[0];
       } else {
         throw Exception('No locally saved data found for the current date');
       }
@@ -401,11 +545,25 @@ class MainController extends GetxController {
 
     if (Platform.isAndroid) {
       await flutterLocalNotificationsPlugin.initialize(
-        const InitializationSettings(
-          //iOS: DarwinInitializationSettings(),
-          android: AndroidInitializationSettings('yh'),
-        ),
-      );
+          const InitializationSettings(
+            //iOS: DarwinInitializationSettings(),
+            android: AndroidInitializationSettings('yh'),
+          ), onDidReceiveNotificationResponse:
+              (NotificationResponse notificationResponse) async {
+        if (notificationResponse.payload != null) {
+          debugPrint('Notification payload: ${notificationResponse.payload}');
+          // Show snackbar with payload
+          Get.snackbar(
+            'Alert', // Title of the snackbar
+            notificationResponse.payload.toString(), // Message of the snackbar
+            snackPosition: SnackPosition.TOP, // Position of the snackbar
+            backgroundColor:
+                Colors.grey[800], // Background color of the snackbar
+            colorText: Colors.white, // Text color of the snackbar
+            duration: Duration(seconds: 10),
+          );
+        }
+      });
     }
 
     await flutterLocalNotificationsPlugin
@@ -520,6 +678,46 @@ class MainController extends GetxController {
     return [hours, remainingMinutes, sign];
   }
 
+  String find_intrval_bet_now__and_iqamaTime(int index) {
+    final now = DateTime.now();
+    var sign;
+    print(index);
+    final prayerTime = DateFormat('yyyy-MM-dd HH:mm').parse(
+        '${now.year}-${now.month}-${now.day} ${prayerTimes_iqama[index]}');
+    final timeDiffInMinutes = (prayerTime.difference(now).inMinutes);
+    if (timeDiffInMinutes < 0) {
+      sign = "-";
+    } else {
+      sign = "+";
+    }
+
+    final hours = timeDiffInMinutes ~/ 60;
+    final remainingMinutes = timeDiffInMinutes % 60;
+
+    return "$hours h:$remainingMinutes m";
+  }
+
+  List find_intrval_bet_iqama__and_PrayerTime(int index) {
+    final now = DateTime.now();
+    var sign;
+    final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
+        .parse('${now.year}-${now.month}-${now.day} ${prayerTimes[index]}');
+    final iqamaTime = DateFormat('yyyy-MM-dd HH:mm').parse(
+        '${now.year}-${now.month}-${now.day} ${prayerTimes_iqama[index]}');
+    final timeDiffInMinutes = (iqamaTime.difference(prayerTime).inMinutes);
+
+    if (timeDiffInMinutes < 0) {
+      sign = "-";
+    } else {
+      sign = "+";
+    }
+
+    final hours = timeDiffInMinutes ~/ 60;
+    final remainingMinutes = timeDiffInMinutes % 60;
+
+    return [hours, remainingMinutes, sign];
+  }
+
   // Function to handle notification click event
   void handleNotificationClick() {
     // Navigate to NotificationPage
@@ -537,39 +735,79 @@ class MainController extends GetxController {
 
   Future<void> fetchPrayerTimingsForMonth() async {
     var url =
-        'https://api.aladhan.com/v1/calendar?method=2&latitude=30.508188279926383&longitude=-97.79224473202267&tune=0,0,0,0,0,0,0,0,0';
+        'https://iqamatime.com/members/icbrushycreek-gmail/TimingsXML.xml';
 
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = jsonDecode(response.body);
-        final List<dynamic> data = responseData['data'];
+        final xmlDoc = xml.XmlDocument.parse(response.body);
+        final List<xml.XmlElement> prayerElements =
+            xmlDoc.findAllElements('iqama').toList();
+        print("fgfhjhjfjfhjfkjfjhjkjhjfkf");
+        print(prayerElements.length);
+        for (var prayerElement in prayerElements) {
+          String gregorianDateStr = prayerElement
+              .findElements('Date')
+              .single
+              .innerText; //need to be dd-mm-yyyy
 
-        for (var item in data) {
-          final Map<String, dynamic> timings = item['timings'];
-          final Map<String, dynamic> dateInfo = item['date'];
+          final DateTime gregorianDate = DateTime.parse(gregorianDateStr);
+          gregorianDateStr = _reverseDateFormat(gregorianDateStr);
+          print(gregorianDateStr);
 
-          final String dayName = dateInfo['gregorian']['weekday']['en'];
-          final String gregorianDate = dateInfo['gregorian']['date'];
+          final String dayName = DateFormat('EEEE').format(gregorianDate);
           final String gregorianDate_display =
-              '${dateInfo['gregorian']['day']} ${dateInfo['gregorian']['month']['en']} ${dateInfo['gregorian']['year']}';
+              DateFormat('d MMMM yyyy').format(gregorianDate);
           final String hijriDate =
-              '${dateInfo['hijri']['month']['en']} ${dateInfo['hijri']['day']} ${dateInfo['hijri']['year']}';
+              '${prayerElement.findElements('hijrimonth').single.innerText} ${prayerElement.findElements('hijridate').single.innerText} ${prayerElement.findElements('hijriyear').single.innerText}';
+          print(hijriDate);
+
+          final duhur_time = _splitHourMinute(
+              prayerElement.findElements('DuhurStart').single.innerText);
+          print(duhur_time[0]);
 
           final List<String> prayerTimes = [
-            timings['Fajr'].split(" ")[0],
-            timings['Dhuhr'].split(" ")[0],
-            timings['Asr'].split(" ")[0],
-            timings['Maghrib'].split(" ")[0],
-            timings['Isha'].split(" ")[0],
+            _formatTime(
+                prayerElement.findElements('FajrStart').single.innerText),
+            duhur_time[0] > 10
+                ? _formatTime(
+                    prayerElement.findElements('DuhurStart').single.innerText)
+                : _formatTime(_convertTo24HourFormat(
+                    prayerElement.findElements('DuhurStart').single.innerText)),
+            _formatTime(_convertTo24HourFormat(
+                prayerElement.findElements('AsrStartS').single.innerText)),
+            _formatTime(_convertTo24HourFormat(
+                prayerElement.findElements('SunsetPlus').single.innerText)),
+            _formatTime(_convertTo24HourFormat(
+                prayerElement.findElements('IshaStart').single.innerText)),
+          ];
+
+          final duhur_time_iqama = _splitHourMinute(
+              prayerElement.findElements('DuhurIqama').single.innerText);
+
+          final List<String> prayerTimes_iqama = [
+            _formatTime(
+                prayerElement.findElements('FajrIqama').single.innerText),
+            duhur_time_iqama[0] > 10
+                ? _formatTime(
+                    prayerElement.findElements('DuhurIqama').single.innerText)
+                : _formatTime(_convertTo24HourFormat(
+                    prayerElement.findElements('DuhurIqama').single.innerText)),
+            _formatTime(_convertTo24HourFormat(
+                prayerElement.findElements('AsrIqama').single.innerText)),
+            _formatTime(_convertTo24HourFormat(
+                prayerElement.findElements('MaghribIqama').single.innerText)),
+            _formatTime(_convertTo24HourFormat(
+                prayerElement.findElements('IshaIqama').single.innerText)),
           ];
 
           // Save prayer times and additional information for the current date locally
           await PrayerTimesStorage.savePrayerTimesForDate(
-              gregorianDate,
+              gregorianDateStr,
               prayerTimes,
+              prayerTimes_iqama,
               dayName,
-              gregorianDate,
+              gregorianDate_display,
               gregorianDate_display,
               hijriDate);
         }
@@ -577,7 +815,37 @@ class MainController extends GetxController {
       } else {
         throw Exception('Failed to load prayer timings');
       }
-    } catch (e) {}
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  String _reverseDateFormat(String dateString) {
+    final parts = dateString.split('-');
+    return '${parts[2]}-${parts[1]}-${parts[0]}';
+  }
+
+  String _formatTime(String time) {
+    final parts = time.split(':');
+    final paddedHour = parts[0].padLeft(2, '0');
+    final paddedMinute = parts[1].padLeft(2, '0');
+    return '$paddedHour:$paddedMinute';
+  }
+
+  _splitHourMinute(String time) {
+    var time_list = List<int>.filled(2, 0);
+    ;
+    final parts = time.split(':');
+    time_list[0] = int.parse(parts[0]);
+    time_list[1] = int.parse(parts[1]);
+    return time_list;
+  }
+
+  String _convertTo24HourFormat(String time) {
+    final time_list = _splitHourMinute(time);
+    final hour = time_list[0];
+    final minute = time_list[1];
+    return '${hour + 12}:$minute';
   }
 
   String getPrayerName(int index) {

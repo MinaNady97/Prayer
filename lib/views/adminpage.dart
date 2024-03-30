@@ -86,185 +86,185 @@ class ManagePage extends StatelessWidget {
                 Navigator.of(context).pop();
               },
             ),
-            SizedBox(
-              height: 15,
-            ),
-            Text(
-              'Time between Azan And Eqama',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            Form(
-              key: controller.form_time_state,
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 1,
-                        child: Text(
-                          "Fajr",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            color: _controller.isDark.isTrue
-                                ? _controller.primary_dark_color
-                                : _controller.primary_light_color,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: CustomTextFieldAuth(
-                          isPassword: false,
-                          isNumber: true,
-                          valid: (value) {
-                            return validatefunc_input(value!, 1, 2, "times");
-                          },
-                          label: "Fajr",
-                          hinttext: "Fajr time",
-                          icondata: Icons.timer,
-                          mycontroller: controller.Fajr,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 1,
-                        child: Text(
-                          "Dhuhr",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            color: _controller.isDark.isTrue
-                                ? _controller.primary_dark_color
-                                : _controller.primary_light_color,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: CustomTextFieldAuth(
-                          isPassword: false,
-                          isNumber: true,
-                          valid: (value) {
-                            return validatefunc_input(value!, 1, 2, "times");
-                          },
-                          label: "Dhuhr",
-                          hinttext: "Dhuhr time",
-                          icondata: Icons.timer,
-                          mycontroller: controller.Dhuhr,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 1,
-                        child: Text(
-                          "Asr",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            color: _controller.isDark.isTrue
-                                ? _controller.primary_dark_color
-                                : _controller.primary_light_color,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: CustomTextFieldAuth(
-                          isPassword: false,
-                          isNumber: true,
-                          valid: (value) {
-                            return validatefunc_input(value!, 1, 2, "times");
-                          },
-                          label: "Asr",
-                          hinttext: "Asr time",
-                          icondata: Icons.timer,
-                          mycontroller: controller.Asr,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 1,
-                        child: Text(
-                          "Maghrib",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            color: _controller.isDark.isTrue
-                                ? _controller.primary_dark_color
-                                : _controller.primary_light_color,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: CustomTextFieldAuth(
-                          isPassword: false,
-                          isNumber: true,
-                          valid: (value) {
-                            return validatefunc_input(value!, 1, 2, "times");
-                          },
-                          label: "Maghrib",
-                          hinttext: "Maghrib time",
-                          icondata: Icons.timer,
-                          mycontroller: controller.Maghrib,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 1,
-                        child: Text(
-                          "Isha",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            color: _controller.isDark.isTrue
-                                ? _controller.primary_dark_color
-                                : _controller.primary_light_color,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: CustomTextFieldAuth(
-                          isPassword: false,
-                          isNumber: true,
-                          valid: (value) {
-                            return validatefunc_input(value!, 1, 2, "times");
-                          },
-                          label: "Isha",
-                          hinttext: "Isha time",
-                          icondata: Icons.timer,
-                          mycontroller: controller.Isha,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(
-              height: 10,
-            ),
-            CustomButtonAuth(
-              width: w,
-              text: "save times",
-              onpressed: () {
-                controller.update_time();
-              },
-            ),
+            // SizedBox(
+            //   height: 15,
+            // ),
+            // Text(
+            //   'Time between Azan And Eqama',
+            //   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            // ),
+            // Form(
+            //   key: controller.form_time_state,
+            //   child: Column(
+            //     children: [
+            //       Row(
+            //         children: [
+            //           Expanded(
+            //             flex: 1,
+            //             child: Text(
+            //               "Fajr",
+            //               style: TextStyle(
+            //                 fontWeight: FontWeight.bold,
+            //                 fontSize: 18,
+            //                 color: _controller.isDark.isTrue
+            //                     ? _controller.primary_dark_color
+            //                     : _controller.primary_light_color,
+            //               ),
+            //             ),
+            //           ),
+            //           Expanded(
+            //             flex: 3,
+            //             child: CustomTextFieldAuth(
+            //               isPassword: false,
+            //               isNumber: true,
+            //               valid: (value) {
+            //                 return validatefunc_input(value!, 1, 2, "times");
+            //               },
+            //               label: "Fajr",
+            //               hinttext: "Fajr time",
+            //               icondata: Icons.timer,
+            //               mycontroller: controller.Fajr,
+            //             ),
+            //           ),
+            //         ],
+            //       ),
+            //       Row(
+            //         children: [
+            //           Expanded(
+            //             flex: 1,
+            //             child: Text(
+            //               "Dhuhr",
+            //               style: TextStyle(
+            //                 fontWeight: FontWeight.bold,
+            //                 fontSize: 18,
+            //                 color: _controller.isDark.isTrue
+            //                     ? _controller.primary_dark_color
+            //                     : _controller.primary_light_color,
+            //               ),
+            //             ),
+            //           ),
+            //           Expanded(
+            //             flex: 3,
+            //             child: CustomTextFieldAuth(
+            //               isPassword: false,
+            //               isNumber: true,
+            //               valid: (value) {
+            //                 return validatefunc_input(value!, 1, 2, "times");
+            //               },
+            //               label: "Dhuhr",
+            //               hinttext: "Dhuhr time",
+            //               icondata: Icons.timer,
+            //               mycontroller: controller.Dhuhr,
+            //             ),
+            //           ),
+            //         ],
+            //       ),
+            //       Row(
+            //         children: [
+            //           Expanded(
+            //             flex: 1,
+            //             child: Text(
+            //               "Asr",
+            //               style: TextStyle(
+            //                 fontWeight: FontWeight.bold,
+            //                 fontSize: 18,
+            //                 color: _controller.isDark.isTrue
+            //                     ? _controller.primary_dark_color
+            //                     : _controller.primary_light_color,
+            //               ),
+            //             ),
+            //           ),
+            //           Expanded(
+            //             flex: 3,
+            //             child: CustomTextFieldAuth(
+            //               isPassword: false,
+            //               isNumber: true,
+            //               valid: (value) {
+            //                 return validatefunc_input(value!, 1, 2, "times");
+            //               },
+            //               label: "Asr",
+            //               hinttext: "Asr time",
+            //               icondata: Icons.timer,
+            //               mycontroller: controller.Asr,
+            //             ),
+            //           ),
+            //         ],
+            //       ),
+            //       Row(
+            //         children: [
+            //           Expanded(
+            //             flex: 1,
+            //             child: Text(
+            //               "Maghrib",
+            //               style: TextStyle(
+            //                 fontWeight: FontWeight.bold,
+            //                 fontSize: 18,
+            //                 color: _controller.isDark.isTrue
+            //                     ? _controller.primary_dark_color
+            //                     : _controller.primary_light_color,
+            //               ),
+            //             ),
+            //           ),
+            //           Expanded(
+            //             flex: 3,
+            //             child: CustomTextFieldAuth(
+            //               isPassword: false,
+            //               isNumber: true,
+            //               valid: (value) {
+            //                 return validatefunc_input(value!, 1, 2, "times");
+            //               },
+            //               label: "Maghrib",
+            //               hinttext: "Maghrib time",
+            //               icondata: Icons.timer,
+            //               mycontroller: controller.Maghrib,
+            //             ),
+            //           ),
+            //         ],
+            //       ),
+            //       Row(
+            //         children: [
+            //           Expanded(
+            //             flex: 1,
+            //             child: Text(
+            //               "Isha",
+            //               style: TextStyle(
+            //                 fontWeight: FontWeight.bold,
+            //                 fontSize: 18,
+            //                 color: _controller.isDark.isTrue
+            //                     ? _controller.primary_dark_color
+            //                     : _controller.primary_light_color,
+            //               ),
+            //             ),
+            //           ),
+            //           Expanded(
+            //             flex: 3,
+            //             child: CustomTextFieldAuth(
+            //               isPassword: false,
+            //               isNumber: true,
+            //               valid: (value) {
+            //                 return validatefunc_input(value!, 1, 2, "times");
+            //               },
+            //               label: "Isha",
+            //               hinttext: "Isha time",
+            //               icondata: Icons.timer,
+            //               mycontroller: controller.Isha,
+            //             ),
+            //           ),
+            //         ],
+            //       ),
+            //     ],
+            //   ),
+            // ),
+            // SizedBox(
+            //   height: 10,
+            // ),
+            // CustomButtonAuth(
+            //   width: w,
+            //   text: "save times",
+            //   onpressed: () {
+            //     controller.update_time();
+            //   },
+            // ),
           ],
         ),
       ),
