@@ -23,7 +23,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
-    Timer.periodic(const Duration(seconds: 59), (timer) {
+    Timer.periodic(const Duration(seconds: 1), (timer) {
       controller.updateTime();
     });
     return Obx(
