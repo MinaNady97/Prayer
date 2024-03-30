@@ -734,9 +734,15 @@ class MainController extends GetxController {
   String find_intrval_bet_now__and_iqamaTime(int index) {
     final now = DateTime.now();
     var sign;
+    int _count = 0;
     print(index);
+    if (now.hour > int.parse(prayerTimes[4].split(":")[0]) ||
+        (now.hour == int.parse(prayerTimes[4].split(":")[0]) &&
+            now.minute >= int.parse(prayerTimes[4].split(":")[1]))) {
+      _count = 1;
+    }
     final prayerTime = DateFormat('yyyy-MM-dd HH:mm').parse(
-        '${now.year}-${now.month}-${now.day} ${prayerTimes_iqama[index]}');
+        '${now.year}-${now.month}-${now.day + _count} ${prayerTimes_iqama[index]}');
     final timeDiffInMinutes = (prayerTime.difference(now).inMinutes);
     if (timeDiffInMinutes < 0) {
       sign = "-";
@@ -748,6 +754,37 @@ class MainController extends GetxController {
     final remainingMinutes = timeDiffInMinutes % 60;
 
     return "$hours h:$remainingMinutes m";
+  }
+
+  List findClosestiqamaTime() {
+    final now = DateTime.now();
+    String closestKey = "Fajr";
+    int closestDiffInMinutes =
+        999999999999999999; // Initialize with maximum positive value
+    var index = 0;
+
+    if (now.hour > int.parse(prayerTimes_iqama[4].split(":")[0]) ||
+        (now.hour == int.parse(prayerTimes_iqama[4].split(":")[0]) &&
+            now.minute >= int.parse(prayerTimes_iqama[4].split(":")[1]))) {
+      index = 1;
+    }
+
+    for (var x in prayerTimes_iqama) {
+      final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
+          .parse('${now.year}-${now.month}-${now.day + index} ${x}');
+      final timeDiffInMinutes = (prayerTime.difference(now).inMinutes);
+
+      // Check if prayer time is in the future (positive difference)
+      if (timeDiffInMinutes >= 0 && timeDiffInMinutes < closestDiffInMinutes) {
+        closestKey = x;
+        closestDiffInMinutes = timeDiffInMinutes;
+      }
+    }
+    // Convert the closest time difference to hours and remaining minutes
+    final hours = closestDiffInMinutes ~/ 60;
+    final remainingMinutes = (closestDiffInMinutes % 60);
+
+    return [closestKey, hours, remainingMinutes];
   }
 
   List find_intrval_bet_iqama__and_PrayerTime(int index) {
