@@ -17,8 +17,8 @@ class About_us_page extends StatelessWidget {
                 fontSize: 25, fontWeight: FontWeight.w900, color: Colors.white),
           ),
           backgroundColor: controller.isDark.isTrue
-              ? controller.primary_dark_color
-              : controller.primary_light_color,
+              ? controller.primary_dark_color.value
+              : controller.primary_light_color.value,
         ),
         body: Center(
           child: Padding(

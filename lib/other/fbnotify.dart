@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
+import 'package:sametsalah/main.dart';
 
 Future<void> requestPermissionNotification() async {
   NotificationSettings settings =
@@ -19,6 +20,7 @@ Future<void> requestPermissionNotification() async {
 
 fcmcofing() {
   FirebaseMessaging.onMessage.listen((message) {
+    controller.unread();
     FlutterRingtonePlayer().playNotification();
     Get.defaultDialog(
         title: message.notification!.title!,

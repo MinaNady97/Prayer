@@ -63,6 +63,7 @@ Future<void> main() async {
   // Call setupFirebaseMessaging to initialize Firebase Cloud Messaging
   controller.setupFirebaseMessaging();
   await controller.fetchPrayerTimings();
+  await controller.unread();
   await controller.get_times_from_DB();
   if (await controller.getTheme() == null) {
     instance!.setBool("isDark", false);
@@ -71,9 +72,23 @@ Future<void> main() async {
     controller.isDark = RxBool(await controller.getTheme());
     controller.theme_value = controller.isDark.isTrue ? "dark" : "light";
   }
+  if (await instance!.getBool("isRed") == null) {
+    instance!.setBool("isRed", true);
+    controller.theme_color = "red".obs;
+    controller.isRed = true.obs;
+  } else {
+    print("dfdczzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzx");
+    controller.isRed = RxBool(await controller.getThemeColor());
+    controller.theme_color.value = controller.isRed.isTrue ? "red" : "blue";
+    controller.primary_dark_color.value = controller.isRed.isTrue
+        ? Color.fromARGB(255, 127, 41, 53)
+        : Color.fromARGB(255, 51, 72, 99);
+    controller.primary_light_color.value = controller.isRed.isTrue
+        ? Color.fromARGB(255, 127, 41, 53)
+        : Color.fromARGB(255, 1, 50, 90);
+  }
   if (instance!.getBool("isNotification") == null) {
     instance!.setBool("isNotification", true);
-    print("hereeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
     controller.isNotification.value = true;
   } else {
     controller.isNotification = RxBool(await controller.getNotificationVlaue());

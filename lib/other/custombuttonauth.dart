@@ -21,8 +21,8 @@ class CustomButtonAuth extends StatelessWidget {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
           padding: EdgeInsets.symmetric(vertical: 12, horizontal: 50),
           color: controller.isDark.isTrue
-              ? controller.primary_dark_color
-              : controller.primary_light_color,
+              ? controller.primary_dark_color.value
+              : controller.primary_light_color.value,
           child: Text(
             text,
             style: TextStyle(

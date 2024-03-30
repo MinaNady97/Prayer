@@ -35,8 +35,8 @@ class LoginPage extends StatelessWidget {
                       "Login for Admin",
                       style: TextStyle(
                           color: controller.isDark.isTrue
-                              ? controller.primary_dark_color
-                              : controller.primary_light_color,
+                              ? controller.primary_dark_color.value
+                              : controller.primary_light_color.value,
                           fontSize: 45,
                           fontWeight: FontWeight.bold,
                           fontFamily: 'Poppins'),

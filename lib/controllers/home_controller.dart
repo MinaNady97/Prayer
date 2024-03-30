@@ -29,6 +29,13 @@ import 'package:flutter_background_service_android/flutter_background_service_an
 import 'package:disable_battery_optimization/disable_battery_optimization.dart';
 import 'package:xml/xml.dart' as xml;
 
+enum Sky { red, blue }
+
+Map<Sky, Color> skyColors = <Sky, Color>{
+  Sky.red: const Color.fromARGB(255, 127, 41, 53),
+  Sky.blue: const Color.fromARGB(255, 1, 50, 90),
+};
+
 @pragma('vm:entry-point')
 void onstart(ServiceInstance service) async {
   DartPluginRegistrant.ensureInitialized();
@@ -59,7 +66,7 @@ void onstart(ServiceInstance service) async {
   var sign;
   String? last_key = "";
   Timer.periodic(
-    const Duration(seconds: 20),
+    const Duration(seconds: 10),
     (timer) async {
       closest_prayer_time_now_list = control.findClosestPrayerTime_abs();
       var index = control.prayerTimes.indexOf(closest_prayer_time_now_list[0]);
@@ -216,6 +223,7 @@ void onstart(ServiceInstance service) async {
 
 class MainController extends GetxController {
   RxBool isDark = true.obs;
+  RxBool isRed = true.obs;
   RxBool isNotification = true.obs;
   RxBool service_is_runing = false.obs;
   List<QueryDocumentSnapshot> constants = [];
@@ -237,14 +245,17 @@ class MainController extends GetxController {
   //late SharedPreferences instance;
   List<String> prayerTimes_ = List.filled(5, '');
   String theme_value = "dark";
+
   bool flag_test = false;
   var currentTime = "".obs;
-  String theme_color = "red";
-  // Color primary_dark_color = Color.fromARGB(255, 51, 72, 99);
-  // Color primary_light_color = Color.fromARGB(255, 1, 50, 90);
-  Color primary_dark_color = Color.fromARGB(255, 127, 41, 53);
-  Color primary_light_color = Color.fromARGB(255, 127, 41, 53);
 
+  var primary_dark_color = Color.fromARGB(255, 127, 41, 53).obs;
+  var primary_light_color = Color.fromARGB(255, 127, 41, 53).obs;
+  int? notification_count;
+  RxString theme_color = "red".obs;
+  RxInt unreadcount = 0.obs;
+
+  late Sky selectedSky = isRed.isTrue ? Sky.red : Sky.blue;
   void changeTheme(bool value) {
     isDark.value = value;
     if (value) {
@@ -256,17 +267,44 @@ class MainController extends GetxController {
     }
   }
 
-  void changeThemeColor(String value) {
-    if (value == "red") {
-      primary_dark_color = Color.fromARGB(255, 127, 41, 53);
-      primary_light_color = Color.fromARGB(255, 127, 41, 53);
-    } else if (value == "blue") {
-      print("blue");
-      primary_dark_color = Color.fromARGB(255, 51, 72, 99);
-      primary_light_color = Color.fromARGB(255, 1, 50, 90);
+  Future<void> unread() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    CollectionReference notificationsCollection =
+        FirebaseFirestore.instance.collection('notifications');
+    QuerySnapshot snapshot = await notificationsCollection.get();
+    notification_count = snapshot.size;
+    int? readedN = prefs.getInt("readedN");
+    if (readedN == null) {
+      unreadcount.value = notification_count!;
+    } else {
+      unreadcount.value = notification_count! - readedN;
     }
-    theme_color = value;
+    print("unread count: " + unreadcount.value.toString());
+    update();
   }
+
+  void setthereadednotification() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setInt("readedN", notification_count!);
+    print(unreadcount.value);
+    unreadcount.value = 0;
+    update();
+  }
+
+  // void changeThemeColor(bool value) {
+  //   if (value) {
+  //     primary_dark_color = Color.fromARGB(255, 127, 41, 53);
+  //     primary_light_color = Color.fromARGB(255, 127, 41, 53);
+  //     instance!.setBool("isRed", true);
+  //     theme_color = "red";
+  //   } else if (value) {
+  //     print("blue");
+  //     primary_dark_color = Color.fromARGB(255, 51, 72, 99);
+  //     primary_light_color = Color.fromARGB(255, 1, 50, 90);
+  //     instance!.setBool("isRed", false);
+  //     theme_color = "blue";
+  //   }
+  // }
 
   void turnNotification(bool value) {
     isNotification.value = value;
@@ -298,6 +336,19 @@ class MainController extends GetxController {
     }
   }
 
+  Future<bool> getThemeColor() async {
+    // Check if instance is not null before trying to get the boolean value
+    if (instance != null) {
+      // Use ?. operator to safely access methods on nullable types
+      return instance!.getBool("isRed") ??
+          false; // Use null-aware operator ?? to provide a default value if "isDark" is not found
+    } else {
+      // Handle the case where instance is null
+      // You might want to return a default value or throw an error, depending on your use case
+      return false; // Default value assuming dark mode is false if SharedPreferences is not initialized
+    }
+  }
+
   Future<bool> getNotificationVlaue() async {
     // Check if instance is not null before trying to get the boolean value
     if (instance != null) {
@@ -314,6 +365,9 @@ class MainController extends GetxController {
   @override
   Future<void> onInit() async {
     print("first");
+    isRed.value = true;
+    theme_color.value = "red";
+    selectedSky = isRed.isTrue ? Sky.red : Sky.blue;
     //isNotification.value = instance.getBool("isNotification")!;
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -325,7 +379,6 @@ class MainController extends GetxController {
     await get_times_from_DB();
     await get_coordinates_from_DB();
     await fetchPrayerTimings();
-
     super.onInit();
   }
 
@@ -884,7 +937,6 @@ class MainController extends GetxController {
 
   void updateTime() {
     // Update the current time
-
     currentTime.value =
         '${addLeadingZero(DateTime.now().hour)} : ${addLeadingZero(DateTime.now().minute)}';
   }

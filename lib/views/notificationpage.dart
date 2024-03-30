@@ -49,8 +49,8 @@ class _NotificationsListPageState extends State<NotificationPage> {
             style: TextStyle(color: Colors.white),
           ),
           backgroundColor: _controller.isDark.isTrue
-              ? _controller.primary_dark_color
-              : _controller.primary_light_color,
+              ? _controller.primary_dark_color.value
+              : _controller.primary_light_color.value,
         ),
         body: StreamBuilder<QuerySnapshot>(
           stream: controller

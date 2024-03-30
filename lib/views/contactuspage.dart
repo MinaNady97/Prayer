@@ -19,8 +19,8 @@ class Contact_Page extends StatelessWidget {
                 fontSize: 25, fontWeight: FontWeight.w900, color: Colors.white),
           ),
           backgroundColor: controller.isDark.isTrue
-              ? controller.primary_dark_color
-              : controller.primary_light_color,
+              ? controller.primary_dark_color.value
+              : controller.primary_light_color.value,
         ),
         body: Center(
           child: Padding(
@@ -52,8 +52,8 @@ class Contact_Page extends StatelessWidget {
                       child: Icon(
                         Icons.phone,
                         color: controller.isDark.isTrue
-                            ? controller.primary_dark_color
-                            : controller.primary_light_color,
+                            ? controller.primary_dark_color.value
+                            : controller.primary_light_color.value,
                         size: 35,
                       ),
                     ),
@@ -97,8 +97,8 @@ class Contact_Page extends StatelessWidget {
                       Icon(
                         Icons.mail,
                         color: controller.isDark.isTrue
-                            ? controller.primary_dark_color
-                            : controller.primary_light_color,
+                            ? controller.primary_dark_color.value
+                            : controller.primary_light_color.value,
                         size: 35,
                       ),
                     ],
@@ -123,8 +123,8 @@ class Contact_Page extends StatelessWidget {
                       Icon(
                         Icons.location_on,
                         color: controller.isDark.isTrue
-                            ? controller.primary_dark_color
-                            : controller.primary_light_color,
+                            ? controller.primary_dark_color.value
+                            : controller.primary_light_color.value,
                         size: 35,
                       ),
                     ],

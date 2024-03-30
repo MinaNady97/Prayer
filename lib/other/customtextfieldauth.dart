@@ -32,8 +32,8 @@ class CustomTextFieldAuth extends StatelessWidget {
         height: 50,
         child: TextFormField(
           cursorColor: controller.isDark.isTrue
-              ? controller.primary_dark_color
-              : controller.primary_light_color,
+              ?  controller.primary_dark_color.value
+              :  controller.primary_light_color.value,
           textDirection: TextDirection.ltr,
           textAlign: TextAlign.left,
           controller: mycontroller,
@@ -44,12 +44,12 @@ class CustomTextFieldAuth extends StatelessWidget {
             focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(
                     color: controller.isDark.isTrue
-                        ? controller.primary_dark_color
-                        : controller.primary_light_color),
+                        ?  controller.primary_dark_color.value
+                        :  controller.primary_light_color.value),
                 borderRadius: BorderRadius.circular(30)),
             iconColor: controller.isDark.isTrue
-                ? controller.primary_dark_color
-                : controller.primary_light_color,
+                ?  controller.primary_dark_color.value
+                :  controller.primary_light_color.value,
             isDense: true,
             fillColor: Colors.grey,
             filled: true,
@@ -64,22 +64,22 @@ class CustomTextFieldAuth extends StatelessWidget {
               child: Icon(
                 icondata,
                 color: controller.isDark.isTrue
-                    ? controller.primary_dark_color
-                    : controller.primary_light_color,
+                    ?  controller.primary_dark_color.value
+                    :  controller.primary_light_color.value,
               ),
               onTap: ontapicon,
             ),
             enabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(
                     color: controller.isDark.isTrue
-                        ? controller.primary_dark_color
-                        : controller.primary_light_color),
+                        ?  controller.primary_dark_color.value
+                        :  controller.primary_light_color.value),
                 borderRadius: BorderRadius.circular(30)),
             border: OutlineInputBorder(
                 borderSide: BorderSide(
                     color: controller.isDark.isTrue
-                        ? controller.primary_dark_color
-                        : controller.primary_light_color),
+                        ?  controller.primary_dark_color.value
+                        :  controller.primary_light_color.value),
                 borderRadius: BorderRadius.circular(30)),
           ),
         ),
