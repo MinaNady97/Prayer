@@ -774,9 +774,10 @@ class MainController extends GetxController {
   // Function to handle notification click event
   void handleNotificationClick() {
     // Navigate to NotificationPage
-    runApp(MaterialApp(
-      home: NotificationPage(),
-    ));
+    Get.to(NotificationPage());
+    // runApp(MaterialApp(
+    //   home: NotificationPage(),
+    // ));
   }
 
   void setupFirebaseMessaging() {
