@@ -613,7 +613,7 @@ class MainController extends GetxController {
             backgroundColor:
                 Colors.grey[800], // Background color of the snackbar
             colorText: Colors.white, // Text color of the snackbar
-            duration: Duration(seconds: 10),
+            duration: const Duration(seconds: 20),
           );
         }
       });

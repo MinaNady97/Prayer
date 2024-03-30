@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:sametsalah/controllers/home_controller.dart';
 import 'package:sametsalah/controllers/PrayerTimesStorage.dart';
@@ -93,6 +94,7 @@ Future<void> main() async {
   } else {
     controller.isNotification = RxBool(await controller.getNotificationVlaue());
   }
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(MyApp());
   await requestPermissionNotification();
   await controller.requestLocationPermission();
