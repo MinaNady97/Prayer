@@ -67,7 +67,7 @@ class _SettingsPage extends State<SettingsPage> {
                     )),
                 ListTile(
                   title: Text(
-                    'Notification',
+                    'Prayer Time Indecator',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

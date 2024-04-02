@@ -31,6 +31,7 @@ Future<void> main() async {
     return;
   }
   await controller.initializeService();
+
   //constants = controller.constants;
   controller.updateTime();
   final now_ = DateTime.now();
@@ -65,7 +66,7 @@ Future<void> main() async {
   controller.setupFirebaseMessaging();
   await controller.fetchPrayerTimings();
   await controller.unread();
-  await controller.get_times_from_DB();
+
   if (await controller.getTheme() == null) {
     instance!.setBool("isDark", false);
     controller.theme_value = "light";

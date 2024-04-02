@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -15,7 +17,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sametsalah/controllers/PrayerTimesStorage.dart';
-import 'package:sametsalah/main.dart';
 import 'package:sametsalah/main.dart';
 import 'package:sametsalah/views/notificationpage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -42,7 +43,11 @@ void onstart(ServiceInstance service) async {
   final MainController control = Get.put(MainController());
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
-  var isNotification;
+  instance = await SharedPreferences.getInstance();
+  var isNotification = true;
+
+  control.isNotification.value = await control.getNotificationVlaue();
+  isNotification = control.isNotification.value;
 
   service.on('stopService').listen((event) async {
     await service.stopSelf();
@@ -50,126 +55,225 @@ void onstart(ServiceInstance service) async {
   });
   service.on('turnonNotification').listen((event) async {
     isNotification = true;
+    instance!.setBool("isNotification", true);
     print("notifivation on");
   });
   service.on('turnoffNotification').listen((event) async {
     print("notifivation off");
     isNotification = false;
+    instance!.setBool("isNotification", false);
   });
-  control.isNotification.value = await control.getNotificationVlaue();
-  String? key = null;
-  var time_interval = 999999999999999999;
-  var time_of_aqama_of_current_prayer = 999999999999999999;
-  var closest_prayer_time_now = "";
-  List closest_prayer_time_now_list = [];
-  bool times_get = false;
-  var sign;
-  String? last_key = "";
+
+  late List<Map<String, dynamic>> closetPrayerInfoList;
+  var silent_timer = 15;
+  var nextday = 0;
+  var is_silent = false;
   Timer.periodic(
     const Duration(seconds: 10),
     (timer) async {
-      closest_prayer_time_now_list = control.findClosestPrayerTime_abs();
-      var index = control.prayerTimes.indexOf(closest_prayer_time_now_list[0]);
-      closest_prayer_time_now = control.getPrayerName(index);
+      final now = DateTime.now();
+      DateFormat dateFormat = DateFormat.EEEE();
+      var today = dateFormat.format(now);
 
-      if (closest_prayer_time_now_list[1] == 0 &&
-          closest_prayer_time_now_list[2] <= 40) {
-        key = closest_prayer_time_now;
+      print("today is :" + today);
+      if (control.gregorianDate.split(" ")[0] != now.day) {
+        print("new time fetched");
+        control.fetchPrayerTimings();
+      }
+      if (today == "Friday") {
+        var prayerTimes = [...control.prayerTimes];
+        prayerTimes.removeAt(2);
+        prayerTimes.insertAll(2, control.prayerTimes_Jumuah);
+        var prayerTimes_iqama = [...control.prayerTimes_iqama];
+        prayerTimes_iqama.removeAt(2);
+        prayerTimes_iqama.insertAll(2, control.prayerTimes_Jumuah);
+
+        closetPrayerInfoList = control.createPrayerInfoList(
+            prayerTimes, prayerTimes_iqama, control.getPrayerName_jumaha, 0);
+      } else {
+        closetPrayerInfoList = control.createPrayerInfoList(control.prayerTimes,
+            control.prayerTimes_iqama, control.getPrayerName, 0);
       }
 
-      print("closest_prayer_time_now $closest_prayer_time_now");
-      print("closest_prayer_time_now_in_min $closest_prayer_time_now_list");
+      var ClosestPrayer = control.findClosestPrayerKey(closetPrayerInfoList);
+      var ClosetKey = ClosestPrayer['key'];
 
-      print("key :$key");
-      print("last key $last_key");
+      var time_difference_list =
+          control.getTimeDifference(closetPrayerInfoList, ClosetKey);
 
-      if (key != null && key != last_key) {
-        List time_interval_list = control
-            .find_intrval_bet_now__and_PrayerTime(control.getPrayerindex(key!));
-        print("time interval list $time_interval_list");
-        sign = time_interval_list[2];
-        time_interval = time_interval_list[1];
+      //var iqama_time = ClosestPrayer['iqamaTime'];
+
+      if (['Jumuah Fisrt Iqama', 'Jumuah Second Iqama', 'Jumuah Third Iqama']
+          .contains(ClosetKey)) {
+        silent_timer = 45;
+      } else {
+        silent_timer = 15;
       }
-
-      print("control flag ${control.flag}");
-      print("time interval:" + time_interval.toString());
-
-      if (key != null && control.flag == true && key != last_key) {
-        print('The key for the value is: $key');
-
-        time_of_aqama_of_current_prayer =
-            control.find_intrval_bet_iqama__and_PrayerTime(index)[1];
-        //int.parse(control.constants[0]["times"][key]);
-        //print("sign" + sign);
-        if (sign == "+" &&
-            time_interval >= time_of_aqama_of_current_prayer &&
-            time_interval <= time_of_aqama_of_current_prayer + 15) {
-          var checkd = await control.checkLocation();
-          if (checkd) {
-            control.flag = false;
-          } else if (time_interval > time_of_aqama_of_current_prayer + 15) {
-            control.flag = true;
-            last_key = key;
-            key = null;
-            time_of_aqama_of_current_prayer = 999999999999999999;
-            time_interval = 999999999999999999;
-            times_get = false;
-          }
+      print(time_difference_list);
+      print(ClosetKey);
+      print(silent_timer);
+      print(control.flag);
+      if (time_difference_list['iqamaTimeDifferenceInMinutes'] >= 0 &&
+          time_difference_list['iqamaTimeDifferenceInMinutes'] <=
+              silent_timer &&
+          ClosetKey != 'Sunrise' &&
+          control.flag) {
+        print("checking");
+        is_silent = await control.checkLocation();
+        if (is_silent) {
+          control.flag = false;
         }
-      } else if (time_interval > time_of_aqama_of_current_prayer + 15 &&
-          sign == "+" &&
+      } else if (time_difference_list['iqamaTimeDifferenceInMinutes'] >
+              silent_timer &&
           control.flag == false) {
-        //print("here 2");
-        time_of_aqama_of_current_prayer = 999999999999999999;
         control.enable_sound();
         control.flag = true;
-        time_interval = 999999999999999999;
-        last_key = key;
-        key = null;
-        times_get = false;
       }
-      print("time fo aqama:$time_of_aqama_of_current_prayer");
-      print(isNotification);
+
+      //
+      // closest_prayer_time_now_list = control.findClosestPrayerTime_abs();
+      // var index = control.prayerTimes.indexOf(closest_prayer_time_now_list[0]);
+      // closest_prayer_time_now = control.getPrayerName(index);
+
+      // // if (closest_prayer_time_now_list[1] == 0 &&
+      // //     closest_prayer_time_now_list[2] <= 40) {
+      // if (control.flag == true) {
+      //   key = closest_prayer_time_now;
+      // }
+
+      // print("closest_prayer_time_now $closest_prayer_time_now");
+      // print("closest_prayer_time_now_in_min $closest_prayer_time_now_list");
+
+      // print("key :$key");
+      // print("last key $last_key");
+
+      // if (key != null && key != last_key) {
+      //   List time_interval_list = control.find_intrval_bet_now__and_PrayerTime(
+      //       control.getPrayerindex(key!, today));
+      //   print("time interval list $time_interval_list");
+      //   sign = time_interval_list[2];
+      //   time_interval = time_interval_list[1];
+      //   time_interval_h = time_interval_list[0];
+      // }
+
+      // print("control flag ${control.flag}");
+      // print("time interval:" + time_interval.toString());
+
+      // if (key != null && control.flag == true && key != last_key) {
+      //   print('The key for the value is: $key');
+
+      //   time_of_aqama_of_current_prayer =
+      //       control.find_intrval_bet_iqama__and_PrayerTime(index)[1];
+      //   //print("sign" + sign);
+      //   print(time_interval_h);
+      //   if (sign == "+" &&
+      //       time_interval >= time_of_aqama_of_current_prayer &&
+      //       time_interval <= time_of_aqama_of_current_prayer + 15 &&
+      //       time_interval_h == 0) {
+      //     print("checking");
+      //     var checkd = await control.checkLocation();
+      //     if (checkd) {
+      //       control.flag = false;
+      //     } else if (time_interval > time_of_aqama_of_current_prayer + 15) {
+      //       control.flag = true;
+      //       last_key = key;
+      //       key = null;
+      //       time_of_aqama_of_current_prayer = 999999999999999999;
+      //       time_interval = 999999999999999999;
+      //       time_interval_h = 99999999999999999;
+      //     }
+      //   }
+      // } else if (time_interval > time_of_aqama_of_current_prayer + 15 &&
+      //     sign == "+" &&
+      //     control.flag == false) {
+      //   //print("here 2");
+      //   time_of_aqama_of_current_prayer = 999999999999999999;
+      //   control.enable_sound();
+      //   control.flag = true;
+      //   time_interval = 999999999999999999;
+      //   time_interval_h = 99999999999999999;
+      //   last_key = key;
+      //   key = null;
+      // }
+      // print("time fo aqama:$time_of_aqama_of_current_prayer");
+      // print(isNotification);
       if (service is AndroidServiceInstance) {
         if (await service.isForegroundService() && isNotification == true) {
           var min_distance = await control.getmindistance();
-          List closest_prayer_time = control.findClosestPrayerTime();
+          if (now.hour > int.parse(control.prayerTimes[4].split(":")[0]) ||
+              (now.hour == int.parse(control.prayerTimes[4].split(":")[0]) &&
+                  now.minute >=
+                      int.parse(control.prayerTimes[4].split(":")[1]))) {
+            nextday = 1;
+          }
+          var nextPrayerInfoList;
+          if (today == "Friday") {
+            var prayerTimes = [...control.prayerTimes];
+            prayerTimes.removeAt(2);
+            prayerTimes.insertAll(2, control.prayerTimes_Jumuah);
+            var prayerTimes_iqama = [...control.prayerTimes_iqama];
+            prayerTimes_iqama.removeAt(2);
+            prayerTimes_iqama.insertAll(2, control.prayerTimes_Jumuah);
+
+            nextPrayerInfoList = control.createPrayerInfoList(prayerTimes,
+                prayerTimes_iqama, control.getPrayerName_jumaha, nextday);
+          } else {
+            nextPrayerInfoList = control.createPrayerInfoList(
+                control.prayerTimes,
+                control.prayerTimes_iqama,
+                control.getPrayerName,
+                nextday);
+          }
+
+          nextPrayerInfoList.forEach((prayerInfo) {
+            print('Prayer: ${prayerInfo['key']}, '
+                'Prayer Time: ${prayerInfo['prayerTime']}, '
+                'Iqama Time: ${prayerInfo['iqamaTime']}, '
+                'Time Difference: ${prayerInfo['timeDifference']} minutes');
+          });
+          var NextPrayer = control.findNextPrayerKey(nextPrayerInfoList);
+
           String _content = "";
           try {
             var status;
-            var rev_status;
-            if (control.flag == false) {
+
+            if (is_silent) {
               status = "silent";
-              rev_status = "normal";
             } else {
               status = "normal";
-              rev_status = "silent";
             }
-            var index = control.prayerTimes.indexOf(closest_prayer_time[0]);
-            var iqama_time = control.find_intrval_bet_now__and_iqamaTime(index);
+            print("next prayer ${NextPrayer}");
+            var next_prayer_key = NextPrayer!["key"];
+            var time_differences = control.getTimeDifference_notification(
+                nextPrayerInfoList, next_prayer_key);
             var fixed_string =
-                "${control.getPrayerName(index)} remains: ${closest_prayer_time[1]}h : ${closest_prayer_time[2]}m\nyor distance from ICBC ${min_distance}m\nthe phone now is $status  ";
-            if (key != null &&
-                time_interval < time_of_aqama_of_current_prayer &&
-                sign == "+") {
+                "${next_prayer_key} remains: ${time_differences['prayerTimeDifference']}\nyor distance from ICBC ${min_distance}m\nthe phone now is $status  ";
+            if (time_difference_list['prayerTimeDifferenceInMinutes'] >= 0 &&
+                time_difference_list['iqamaTimeDifferenceInMinutes'] <= 0) {
               _content =
-                  "${fixed_string} \n  the $key aqama after ${time_of_aqama_of_current_prayer - time_interval}m\nand your phone will be silent \nif you within 100m";
-            } else if (key != null &&
-                time_interval > time_of_aqama_of_current_prayer &&
-                time_interval < time_of_aqama_of_current_prayer + 15 &&
-                sign == "+") {
-              _content =
-                  "${fixed_string}\nyour phone will be normal when  $key pray finishes after ${time_of_aqama_of_current_prayer + 15 - time_interval}m\n ";
+                  "${fixed_string} \nthe $ClosetKey aqama after ${time_difference_list['iqamaTimeDifferenceInMinutes'].abs()}m\nand your phone will be silent \nif you within 100m";
+            } else if (time_difference_list['prayerTimeDifferenceInMinutes'] >=
+                    0 &&
+                time_difference_list['iqamaTimeDifferenceInMinutes'] >= 0 &&
+                time_difference_list['iqamaTimeDifferenceInMinutes'] <
+                    silent_timer) {
+              if (status == "silent") {
+                _content =
+                    "${fixed_string}\nyour phone will be normal when $ClosetKey pray finishes after ${silent_timer - time_difference_list['iqamaTimeDifferenceInMinutes']}m";
+              } else {
+                _content =
+                    "${fixed_string}\n$ClosetKey pray finishes after ${silent_timer - time_difference_list['iqamaTimeDifferenceInMinutes']}m ";
+              }
             } else {
               _content = fixed_string +
-                  " and will be silent after $iqama_time\nif you within 100m";
+                  "and will be silent after ${time_differences['iqamaTimeDifference']}\nif you within 100m";
             }
           } catch (e) {
-            print("here");
+            print("here $e");
           }
           print(_content);
           flutterLocalNotificationsPlugin.show(
-            888,
+            959,
             'ICBC',
             _content,
             const NotificationDetails(
@@ -203,7 +307,7 @@ void onstart(ServiceInstance service) async {
         //     print("here");
         //   }
         //   flutterLocalNotificationsPlugin.show(
-        //     888,
+        //     959,
         //     'ICBC',
         //     _content,
         //     const NotificationDetails(
@@ -226,10 +330,12 @@ class MainController extends GetxController {
   RxBool isRed = true.obs;
   RxBool isNotification = true.obs;
   RxBool service_is_runing = false.obs;
-  List<QueryDocumentSnapshot> constants = [];
   List<QueryDocumentSnapshot> coordinates = [];
-  List<String> prayerTimes = List.filled(5, '00:00');
-  List<String> prayerTimes_iqama = List.filled(5, '00:00');
+  List<String> prayerTimes = List.filled(6, '00:00');
+  List<String> prayerTimes_iqama = List.filled(6, '00:00');
+  List<String> prayerTimes_Jumuah = List.filled(3, '00:00');
+  List<String> prayerTimes_ = List.filled(12, '');
+  List<String> prayerTimes_Jumuah_ = List.filled(3, '');
   String formattedDate = "";
   String targetLatitude = "";
   String targetLongitude = "";
@@ -238,16 +344,13 @@ class MainController extends GetxController {
   String gregorianDateDisplay = "";
   String hijriDate = "";
   late var isRunning;
-  List<String> _prayertimes = [];
   bool flag = true;
   bool data_month_flag = false;
-  bool first_day_flag = true;
-  //late SharedPreferences instance;
-  List<String> prayerTimes_ = List.filled(5, '');
+  //List<String> prayerTimes_ = List.filled(5, '');
   String theme_value = "dark";
-
   bool flag_test = false;
   var currentTime = "".obs;
+  //List<String> jumuah_times = ["12:00", "13:15", "14:30"];
 
   var primary_dark_color = Color.fromARGB(255, 127, 41, 53).obs;
   var primary_light_color = Color.fromARGB(255, 127, 41, 53).obs;
@@ -309,17 +412,13 @@ class MainController extends GetxController {
   void turnNotification(bool value) {
     isNotification.value = value;
     if (value) {
-      print("111111111111111111111");
       instance!.setBool("isNotification", true);
-      print("2222222222222222222222222");
+
       service.invoke("turnonNotification");
-      print("3333333333333333333333333");
     } else {
-      print("44444444444444444444444");
       instance!.setBool("isNotification", false);
-      print("5555555555555555555555555");
+
       service.invoke("turnoffNotification");
-      print("666666666666666666");
     }
   }
 
@@ -330,8 +429,6 @@ class MainController extends GetxController {
       return instance!.getBool("isDark") ??
           false; // Use null-aware operator ?? to provide a default value if "isDark" is not found
     } else {
-      // Handle the case where instance is null
-      // You might want to return a default value or throw an error, depending on your use case
       return false; // Default value assuming dark mode is false if SharedPreferences is not initialized
     }
   }
@@ -343,8 +440,6 @@ class MainController extends GetxController {
       return instance!.getBool("isRed") ??
           false; // Use null-aware operator ?? to provide a default value if "isDark" is not found
     } else {
-      // Handle the case where instance is null
-      // You might want to return a default value or throw an error, depending on your use case
       return false; // Default value assuming dark mode is false if SharedPreferences is not initialized
     }
   }
@@ -356,15 +451,12 @@ class MainController extends GetxController {
       return instance!.getBool("isNotification") ??
           false; // Use null-aware operator ?? to provide a default value if "isDark" is not found
     } else {
-      // Handle the case where instance is null
-      // You might want to return a default value or throw an error, depending on your use case
       return false; // Default value assuming dark mode is false if SharedPreferences is not initialized
     }
   }
 
   @override
   Future<void> onInit() async {
-    print("first");
     isRed.value = true;
     theme_color.value = "red";
     selectedSky = isRed.isTrue ? Sky.red : Sky.blue;
@@ -376,20 +468,9 @@ class MainController extends GetxController {
     FirebaseMessaging.instance.subscribeToTopic("users");
 
     fcmcofing();
-    await get_times_from_DB();
     await get_coordinates_from_DB();
     await fetchPrayerTimings();
     super.onInit();
-  }
-
-  Future<Position?> get_location() async {
-    try {
-      Position _position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.best);
-      return _position;
-    } catch (e) {
-      return null;
-    }
   }
 
   void change_service_statu(bool value) {
@@ -452,15 +533,7 @@ class MainController extends GetxController {
             return true;
           } on PlatformException {
             print('Please enable permissions required');
-            // Get.snackbar(
-            //   'permissions', // Title of the snackbar
-            //   'Please enable Dontditrub required', // Message of the snackbar
-            //   snackPosition: SnackPosition.BOTTOM, // Position of the snackbar
-            //   backgroundColor:
-            //       Colors.grey[800], // Background color of the snackbar
-            //   colorText: Colors.white, // Text color of the snackbar
-            //   duration: Duration(seconds: 3),
-            // );
+
             return false;
           }
         }
@@ -492,6 +565,7 @@ class MainController extends GetxController {
 
         minDistance = min(minDistance, distanceInMeters);
       }
+
       return minDistance.toInt();
     } catch (e) {
       print("Error getting location: $e");
@@ -506,15 +580,6 @@ class MainController extends GetxController {
       print('Please enable permissions required');
     }
     print("soind enabled");
-  }
-
-  Future<void> get_times_from_DB() async {
-    QuerySnapshot times_snapshot = await FirebaseFirestore.instance
-        .collection(
-            "constants") // get the colletion buses from database where it conaton station 1
-        .get();
-    constants.clear();
-    constants.addAll(times_snapshot.docs);
   }
 
   Future<void> get_coordinates_from_DB() async {
@@ -539,14 +604,15 @@ class MainController extends GetxController {
 
       if (storedPrayerTimes != null) {
         // Extract prayer times and additional information from stored data
-        prayerTimes_ = storedPrayerTimes.sublist(0, 10).cast<String>();
-        print("bfddbfdbffcbcvbvbvbcvbcvbvcbcvbcvcb");
+        prayerTimes_ = storedPrayerTimes.sublist(0, 12).cast<String>();
+        prayerTimes_Jumuah_ = storedPrayerTimes.sublist(16, 19).cast<String>();
+
         print(prayerTimes_);
 
-        dayName = storedPrayerTimes[10];
-        gregorianDate = storedPrayerTimes[11];
-        gregorianDateDisplay = storedPrayerTimes[12];
-        hijriDate = storedPrayerTimes[13];
+        dayName = storedPrayerTimes[12];
+        gregorianDate = storedPrayerTimes[13];
+        gregorianDateDisplay = storedPrayerTimes[14];
+        hijriDate = storedPrayerTimes[15];
 
         // Now you have the prayer times and additional information for the current date
         // You can use this data as needed
@@ -556,12 +622,18 @@ class MainController extends GetxController {
         prayerTimes[2] = prayerTimes_[2].split(" ")[0];
         prayerTimes[3] = prayerTimes_[3].split(" ")[0];
         prayerTimes[4] = prayerTimes_[4].split(" ")[0];
+        prayerTimes[5] = prayerTimes_[5].split(" ")[0];
 
-        prayerTimes_iqama[0] = prayerTimes_[5].split(" ")[0];
-        prayerTimes_iqama[1] = prayerTimes_[6].split(" ")[0];
-        prayerTimes_iqama[2] = prayerTimes_[7].split(" ")[0];
-        prayerTimes_iqama[3] = prayerTimes_[8].split(" ")[0];
-        prayerTimes_iqama[4] = prayerTimes_[9].split(" ")[0];
+        prayerTimes_iqama[0] = prayerTimes_[6].split(" ")[0];
+        prayerTimes_iqama[1] = prayerTimes_[7].split(" ")[0];
+        prayerTimes_iqama[2] = prayerTimes_[8].split(" ")[0];
+        prayerTimes_iqama[3] = prayerTimes_[9].split(" ")[0];
+        prayerTimes_iqama[4] = prayerTimes_[10].split(" ")[0];
+        prayerTimes_iqama[5] = prayerTimes_[11].split(" ")[0];
+
+        prayerTimes_Jumuah[0] = prayerTimes_Jumuah_[0];
+        prayerTimes_Jumuah[1] = prayerTimes_Jumuah_[1];
+        prayerTimes_Jumuah[2] = prayerTimes_Jumuah_[2];
       } else {
         throw Exception('No locally saved data found for the current date');
       }
@@ -613,7 +685,7 @@ class MainController extends GetxController {
             backgroundColor:
                 Colors.grey[800], // Background color of the snackbar
             colorText: Colors.white, // Text color of the snackbar
-            duration: const Duration(seconds: 20),
+            duration: const Duration(seconds: 10),
           );
         }
       });
@@ -636,7 +708,7 @@ class MainController extends GetxController {
         notificationChannelId: 'ICBC',
         initialNotificationTitle: 'ICBC SERVICE',
         initialNotificationContent: 'Initializing',
-        foregroundServiceNotificationId: 888,
+        foregroundServiceNotificationId: 959,
       ),
       iosConfiguration: IosConfiguration(
         // auto start service
@@ -688,16 +760,10 @@ class MainController extends GetxController {
     int closestDiffInMinutes =
         999999999999999999; // Initialize with maximum positive value
 
-    // if (now.hour > int.parse(prayerTimes[4].split(":")[0]) ||
-    //     (now.hour == int.parse(prayerTimes[4].split(":")[0]) &&
-    //         now.minute >= int.parse(prayerTimes[4].split(":")[1]))) {
-    //   index = 1;
-    // }
-
     for (var x in prayerTimes) {
       final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
           .parse('${now.year}-${now.month}-${now.day} ${x}');
-      final timeDiffInMinutes = (prayerTime.difference(now).inMinutes.abs());
+      final timeDiffInMinutes = (now.difference(prayerTime).inMinutes);
 
       // Check if prayer time is in the future (positive difference)
       if (timeDiffInMinutes >= 0 && timeDiffInMinutes < closestDiffInMinutes) {
@@ -860,6 +926,7 @@ class MainController extends GetxController {
           final List<String> prayerTimes = [
             _formatTime(
                 prayerElement.findElements('FajrStart').single.innerText),
+            _formatTime(prayerElement.findElements('Sunrise').single.innerText),
             duhur_time[0] > 10
                 ? _formatTime(
                     prayerElement.findElements('DuhurStart').single.innerText)
@@ -873,12 +940,55 @@ class MainController extends GetxController {
                 prayerElement.findElements('IshaStart').single.innerText)),
           ];
 
+          final JumuahIqama = _splitHourMinute(
+              prayerElement.findElements('JumuahIqama').single.innerText);
+          final JumuahIqama_2 = _splitHourMinute(
+              prayerElement.findElements('Jumuah2ndIqama').single.innerText);
+          final JumuahIqama_3 = _splitHourMinute(
+              prayerElement.findElements('Jumuah3rdIqama').single.innerText);
+
+          final List<String> prayerTimes_Jumuah = dayName == "Friday"
+              ? [
+                  JumuahIqama[0] > 10
+                      ? _formatTime(prayerElement
+                          .findElements('JumuahIqama')
+                          .single
+                          .innerText)
+                      : _formatTime(_convertTo24HourFormat(prayerElement
+                          .findElements('JumuahIqama')
+                          .single
+                          .innerText)),
+                  JumuahIqama_2[0] > 10
+                      ? _formatTime(prayerElement
+                          .findElements('Jumuah2ndIqama')
+                          .single
+                          .innerText)
+                      : _formatTime(_convertTo24HourFormat(prayerElement
+                          .findElements('Jumuah2ndIqama')
+                          .single
+                          .innerText)),
+                  JumuahIqama_3[0] > 10
+                      ? _formatTime(prayerElement
+                          .findElements('Jumuah3rdIqama')
+                          .single
+                          .innerText)
+                      : _formatTime(_convertTo24HourFormat(prayerElement
+                          .findElements('Jumuah3rdIqama')
+                          .single
+                          .innerText))
+                ]
+              : ["", "", ""];
+
           final duhur_time_iqama = _splitHourMinute(
               prayerElement.findElements('DuhurIqama').single.innerText);
 
           final List<String> prayerTimes_iqama = [
             _formatTime(
                 prayerElement.findElements('FajrIqama').single.innerText),
+            _formatTime(prayerElement
+                .findElements('Sunrise')
+                .single
+                .innerText), // no need
             duhur_time_iqama[0] > 10
                 ? _formatTime(
                     prayerElement.findElements('DuhurIqama').single.innerText)
@@ -897,6 +1007,7 @@ class MainController extends GetxController {
               gregorianDateStr,
               prayerTimes,
               prayerTimes_iqama,
+              prayerTimes_Jumuah,
               dayName,
               gregorianDate_display,
               gregorianDate_display,
@@ -909,6 +1020,103 @@ class MainController extends GetxController {
     } catch (e) {
       print('Error: $e');
     }
+  }
+
+  String getPrayerName(int index) {
+    switch (index) {
+      case 0:
+        return 'Fajr';
+      case 1:
+        return 'Sunrise';
+      case 2:
+        return 'Dhuhr';
+      case 3:
+        return 'Asr';
+      case 4:
+        return 'Maghrib';
+      case 5:
+        return 'Isha';
+      default:
+        return '';
+    }
+  }
+
+  String getPrayerName_jumaha(int index) {
+    switch (index) {
+      case 0:
+        return 'Fajr';
+      case 1:
+        return 'Sunrise';
+      case 2:
+        return 'Jumuah Fisrt Iqama';
+      case 3:
+        return 'Jumuah Second Iqama';
+      case 4:
+        return 'Jumuah Third Iqama';
+      case 5:
+        return 'Asr';
+      case 6:
+        return 'Maghrib';
+      case 7:
+        return 'Isha';
+      default:
+        return '';
+    }
+  }
+
+  // int getPrayerindex(String name, day) {
+  //   if (day == "Friday") {
+  //     switch (name) {
+  //       case 'Fajr':
+  //         return 0;
+  //       case 'Jumuah Fisrt Iqama':
+  //         return 1;
+  //       case 'Jumuah Second Iqama':
+  //         return 2;
+  //       case 'Jumuah Third Iqama':
+  //         return 3;
+  //       case 'Asr':
+  //         return 4;
+  //       case 'Maghrib':
+  //         return 5;
+  //       case 'Isha':
+  //         return 6;
+  //       default:
+  //         return 0;
+  //     }
+  //   } else {
+  //     switch (name) {
+  //       case 'Fajr':
+  //         return 0;
+  //       case 'Dhuhr':
+  //         return 1;
+  //       case 'Asr':
+  //         return 2;
+  //       case 'Maghrib':
+  //         return 3;
+  //       case 'Isha':
+  //         return 4;
+  //       default:
+  //         return 0;
+  //     }
+  //   }
+  // }
+
+  void updateTime() {
+    // Update the current time
+    currentTime.value =
+        '${addLeadingZero(DateTime.now().hour)} : ${addLeadingZero(DateTime.now().minute)}';
+  }
+
+  Future<void> stop_battary_obtimized() async {
+    try {
+      bool? isBatteryOptimizationDisabled =
+          await DisableBatteryOptimization.isBatteryOptimizationDisabled;
+      if (isBatteryOptimizationDisabled == false) {
+        await DisableBatteryOptimization
+            .showDisableBatteryOptimizationSettings();
+      }
+    } catch (e) {}
   }
 
   String _reverseDateFormat(String dateString) {
@@ -939,54 +1147,163 @@ class MainController extends GetxController {
     return '${hour + 12}:$minute';
   }
 
-  String getPrayerName(int index) {
-    switch (index) {
-      case 0:
-        return 'Fajr';
-      case 1:
-        return 'Dhuhr';
-      case 2:
-        return 'Asr';
-      case 3:
-        return 'Maghrib';
-      case 4:
-        return 'Isha';
-      default:
-        return '';
+  String prayertime_12format(String time) {
+    List time_hour_minute = _splitHourMinute(time);
+    return time_hour_minute[0] <= 12
+        ? "${time}AM"
+        : "0${time_hour_minute[0] - 12}:${time_hour_minute[1]}PM";
+  }
+
+  List<Map<String, dynamic>> createPrayerInfoList(
+      List<String> prayerTimes,
+      List<String> prayerTimesIqama,
+      String Function(int) getPrayerName,
+      int index) {
+    List<Map<String, dynamic>> prayerInfoList = [];
+    DateTime currentDate = DateTime.now();
+    for (int i = 0; i < prayerTimes.length; i++) {
+      String prayerTime =
+          '${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${(currentDate.day + index).toString().padLeft(2, '0')} ${prayerTimes[i]}';
+      String iqamaTime =
+          '${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${(currentDate.day + index).toString().padLeft(2, '0')} ${prayerTimesIqama[i]}';
+      Duration timeDifference =
+          DateTime.parse(iqamaTime).difference(DateTime.parse(prayerTime));
+
+      String prayerName = getPrayerName(i);
+
+      prayerInfoList.add({
+        'key': prayerName,
+        'prayerTime': prayerTime,
+        'iqamaTime': iqamaTime,
+        'timeDifference': timeDifference.inMinutes // Convert to minutes
+      });
     }
+
+    return prayerInfoList;
   }
 
-  int getPrayerindex(String name) {
-    switch (name) {
-      case 'Fajr':
-        return 0;
-      case 'Dhuhr':
-        return 1;
-      case 'Asr':
-        return 2;
-      case 'Maghrib':
-        return 3;
-      case 'Isha':
-        return 4;
-      default:
-        return 0;
-    }
-  }
+  Map<String, dynamic> findClosestPrayerKey(
+      List<Map<String, dynamic>> prayerInfoList) {
+    // Get the current time
+    DateTime currentTime = DateTime.now();
 
-  void updateTime() {
-    // Update the current time
-    currentTime.value =
-        '${addLeadingZero(DateTime.now().hour)} : ${addLeadingZero(DateTime.now().minute)}';
-  }
+    // Initialize the index of the closest prayer time as 0
+    int closestIndex = 0;
 
-  Future<void> stop_battary_obtimized() async {
-    try {
-      bool? isBatteryOptimizationDisabled =
-          await DisableBatteryOptimization.isBatteryOptimizationDisabled;
-      if (isBatteryOptimizationDisabled == false) {
-        await DisableBatteryOptimization
-            .showDisableBatteryOptimizationSettings();
+    // Iterate through the prayerInfoList to find the closest prayer time
+    for (int i = 1; i < prayerInfoList.length; i++) {
+      // Get the prayer time for the current iteration
+      DateTime prayerTime = DateTime.parse(prayerInfoList[i]['prayerTime']);
+
+      // Get the prayer time for the closest index
+      DateTime closestPrayerTime =
+          DateTime.parse(prayerInfoList[closestIndex]['prayerTime']);
+
+      // Compare the difference between the current prayer time and the closest prayer time found so far
+      if (currentTime.difference(prayerTime) <
+              currentTime.difference(closestPrayerTime) &&
+          currentTime.difference(prayerTime) > Duration.zero) {
+        closestIndex = i;
       }
-    } catch (e) {}
+    }
+
+    // Return the key of the closest prayer time
+    return prayerInfoList[closestIndex];
+  }
+
+  Map<String, dynamic>? findNextPrayerKey(
+      List<Map<String, dynamic>> prayerInfoList) {
+    // Get the current time
+    DateTime currentTime = DateTime.now();
+
+    // Initialize the index of the next prayer time as -1
+    int nextIndex = -1;
+
+    // Iterate through the prayerInfoList to find the next prayer time
+    for (int i = 0; i < prayerInfoList.length; i++) {
+      // Get the prayer time for the current iteration
+      DateTime prayerTime = DateTime.parse(prayerInfoList[i]['prayerTime']);
+
+      // Calculate the difference between the current prayer time and the current time
+      Duration difference = prayerTime.difference(currentTime);
+
+      // Compare the difference to find the smallest positive difference
+      if (difference > Duration.zero &&
+          (nextIndex == -1 ||
+              difference <
+                  prayerTime.difference(DateTime.parse(
+                      prayerInfoList[nextIndex]['prayerTime'])))) {
+        nextIndex = i;
+      }
+    }
+
+    // Return the key of the next prayer time
+    return nextIndex != -1 ? prayerInfoList[nextIndex] : null;
+  }
+
+  Map<String, dynamic> getTimeDifference(
+      List<Map<String, dynamic>> prayerInfoList, String key) {
+    // Find the prayer time info for the given key
+    Map<String, dynamic> timeInfo = prayerInfoList.firstWhere(
+        (element) => element['key'] == key,
+        orElse: () => {'prayerTime': '', 'iqamaTime': ''});
+
+    // Get current time
+    DateTime now = DateTime.now();
+
+    // Parse prayer time and iqama time
+    DateTime prayerTime = DateTime.parse(timeInfo['prayerTime']);
+    DateTime iqamaTime = DateTime.parse(timeInfo['iqamaTime']);
+
+    // Calculate difference in minutes
+    Duration prayerTimeDifference = now.difference(prayerTime);
+    Duration iqamaTimeDifference = now.difference(iqamaTime);
+
+    // Format difference in "hh:mm"
+    String formattedPrayerTimeDifference = formatTime(prayerTimeDifference);
+    String formattedIqamaTimeDifference = formatTime(iqamaTimeDifference);
+
+    return {
+      'prayerTimeDifference': formattedPrayerTimeDifference,
+      'iqamaTimeDifference': formattedIqamaTimeDifference,
+      'prayerTimeDifferenceInMinutes': prayerTimeDifference.inMinutes,
+      'iqamaTimeDifferenceInMinutes': iqamaTimeDifference.inMinutes,
+    };
+  }
+
+  Map<String, dynamic> getTimeDifference_notification(
+      List<Map<String, dynamic>> prayerInfoList, String key) {
+    // Find the prayer time info for the given key
+    Map<String, dynamic> timeInfo = prayerInfoList.firstWhere(
+        (element) => element['key'] == key,
+        orElse: () => {'prayerTime': '', 'iqamaTime': ''});
+
+    // Get current time
+    DateTime now = DateTime.now();
+
+    // Parse prayer time and iqama time
+    DateTime prayerTime = DateTime.parse(timeInfo['prayerTime']);
+    DateTime iqamaTime = DateTime.parse(timeInfo['iqamaTime']);
+
+    // Calculate difference in minutes
+    Duration prayerTimeDifference = prayerTime.difference(now);
+    Duration iqamaTimeDifference = iqamaTime.difference(now);
+
+    // Format difference in "hh:mm"
+    String formattedPrayerTimeDifference = formatTime(prayerTimeDifference);
+    String formattedIqamaTimeDifference = formatTime(iqamaTimeDifference);
+
+    return {
+      'prayerTimeDifference': formattedPrayerTimeDifference,
+      'iqamaTimeDifference': formattedIqamaTimeDifference,
+      'prayerTimeDifferenceInMinutes': prayerTimeDifference.inMinutes + 1,
+      'iqamaTimeDifferenceInMinutes': iqamaTimeDifference.inMinutes + 1,
+    };
+  }
+
+  String formatTime(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    return '${twoDigits(duration.inHours)}:$twoDigitMinutes';
   }
 }

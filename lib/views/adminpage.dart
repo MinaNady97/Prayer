@@ -42,7 +42,7 @@ class ManagePage extends StatelessWidget {
                     icondata: Icons.notification_add,
                     mycontroller: controller.title_notification,
                   ),
-                  CustomTextFieldAuth(
+                  CustomLargeTextFieldAuth(
                     isPassword: false,
                     isNumber: false,
                     valid: (value) {

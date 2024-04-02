@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:http/http.dart';
@@ -21,17 +22,162 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   Widget build(BuildContext context) {
+    final phone_h = MediaQuery.of(context);
     Timer.periodic(const Duration(seconds: 1), (timer) {
       controller.updateTime();
     });
+    //SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
     return Obx(
       () => GetMaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Prayer Times',
         theme: controller.isDark.isTrue ? ThemeData.dark() : ThemeData.light(),
         home: Scaffold(
+          key: _scaffoldKey, // Assigning key to Scaffold
+          body: Stack(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage(
+                        "images/${controller.theme_value}_${controller.theme_color.value}.jpg"),
+                    fit: BoxFit.fill,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 30),
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: IconButton(
+                    onPressed: () {
+                      _scaffoldKey.currentState
+                          ?.openDrawer(); // Using scaffold key to open drawer
+                    },
+                    icon: Icon(Icons.menu_sharp,
+                        size: 30,
+                        color: controller.isDark.isTrue
+                            ? Colors.white
+                            : Colors.black),
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 50, right: 10),
+                  child: Stack(
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          Get.to(NotificationPage());
+                          controller.setthereadednotification();
+                        },
+                        child: Icon(Icons.notifications_none,
+                            size: 30,
+                            color: controller.isDark.isTrue
+                                ? Colors.white
+                                : Colors.black),
+                      ),
+                      Visibility(
+                        visible: controller.unreadcount != 0,
+                        child: Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            padding: EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              '${controller.unreadcount}',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 0.2 * phone_h.size.height),
+                      Text(
+                        controller.dayName,
+                        style: TextStyle(
+                          fontFamily: 'Arial',
+                          fontSize: 17,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        controller.hijriDate,
+                        style: TextStyle(
+                          fontFamily: 'Arial',
+                          fontSize: 17,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        controller.gregorianDateDisplay,
+                        style: TextStyle(
+                          fontFamily: 'Arial',
+                          fontSize: 17,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        controller.currentTime.value,
+                        style: TextStyle(fontSize: 60),
+                      ),
+                      Text(
+                        "سَمِعْنَا وَأَطَعْنَا ۖ غُفْرَانَكَ رَبَّنَا وَإِلَيْكَ الْمَصِيرُ",
+                        style: TextStyle(
+                          fontFamily: 'Arial',
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        "Islamic Center of Brushy Creek",
+                        style: TextStyle(
+                          fontFamily: 'Arial',
+                          fontSize: 17,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: controller.prayerTimes.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return prayertimecard(
+                              index: index,
+                            );
+                          },
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
           drawer: Drawer(
             surfaceTintColor: controller.isDark.isTrue
                 ? controller.primary_dark_color.value
@@ -106,137 +252,6 @@ class _MyAppState extends State<MyApp> {
               ],
             ),
           ),
-          body: Stack(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage(
-                        "images/${controller.theme_value}_${controller.theme_color.value}.jpg"),
-                    fit: BoxFit.fill,
-                  ),
-                ),
-              ),
-              Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      controller.dayName,
-                      style: TextStyle(
-                        fontFamily: 'Arial',
-                        fontSize: 17,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      controller.hijriDate,
-                      style: TextStyle(
-                        fontFamily: 'Arial',
-                        fontSize: 17,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      controller.gregorianDateDisplay,
-                      style: TextStyle(
-                        fontFamily: 'Arial',
-                        fontSize: 17,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      controller.currentTime.value,
-                      style: TextStyle(fontSize: 60),
-                    ),
-                    Text(
-                      "سَمِعْنَا وَأَطَعْنَا ۖ غُفْرَانَكَ رَبَّنَا وَإِلَيْكَ الْمَصِيرُ",
-                      style: TextStyle(
-                        fontFamily: 'Arial',
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Text(
-                      "Islamic Center of Brushy Creek",
-                      style: TextStyle(
-                        fontFamily: 'Arial',
-                        fontSize: 17,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Container(
-                      height: 290,
-                      child: ListView.builder(
-                        itemCount: controller.prayerTimes.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return prayertimecard(
-                            index: index,
-                          );
-                        },
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            ],
-          ),
-          appBar: AppBar(
-            actions: [
-              InkWell(
-                onTap: () {
-                  Get.to(NotificationPage());
-                  controller.setthereadednotification();
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 9.0),
-                  child: Stack(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Icon(
-                          Icons.notifications,
-                          size: 30,
-                        ),
-                      ), // Display the count only if it's greater than 0
-                      Visibility(
-                        visible: controller.unreadcount != 0,
-                        child: Positioned(
-                          right: 0,
-                          top: 0,
-                          child: Container(
-                            padding: EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Text(
-                              '${controller.unreadcount}',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-            iconTheme: IconThemeData(
-              color: controller.isDark.isTrue
-                  ? Colors.white
-                  : Colors.white, // Change icon color based on theme
-            ),
-            backgroundColor: controller.isDark.isTrue
-                ? controller.primary_dark_color.value
-                : controller.primary_light_color.value,
-          ),
         ),
       ),
     );
@@ -270,45 +285,165 @@ class prayertimecard extends StatelessWidget {
                 children: [
                   Image.asset(
                     'images/PrayerTime${index.toString()}.png', // Replace 'prayer_icon.png' with your icon asset path
-                    width: 24, // Adjust width as needed
-                    height: 24, // Adjust height as needed
+                    width: 25, // Adjust width as needed
+                    height: 25, // Adjust height as needed
                   ),
                   SizedBox(
                     width: 5,
                   ),
-                  Expanded(
-                    child: Text(
-                      controller.getPrayerName(index),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                  if (index != 1 && controller.dayName != "Friday") ...[
+                    Expanded(
+                      child: Text(
+                        controller.getPrayerName(index),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
-                  ),
-                  Image.asset(
-                    'images/Azan.png', // Replace 'prayer_icon.png' with your icon asset path
-                    width: 40, // Adjust width as needed
-                    height: 40, // Adjust height as needed
-                  ),
-                  Expanded(
-                    child: Text(
-                      controller.prayerTimes[index],
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    Image.asset(
+                      'images/Azan.png', // Replace 'prayer_icon.png' with your icon asset path
+                      width: 40, // Adjust width as needed
+                      height: 40, // Adjust height as needed
                     ),
-                  ),
-                  Image.asset(
-                    'images/IQAMAH.png', // Replace 'prayer_icon.png' with your icon asset path
-                    width: 40, // Adjust width as needed
-                    height: 40, // Adjust height as needed
-                  ),
-                  Expanded(
-                    child: Text(
-                      controller.prayerTimes_iqama[index],
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    Expanded(
+                      child: Text(
+                        "${controller.prayerTimes[index]} ",
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
                     ),
-                  ),
+                    Image.asset(
+                      'images/IQAMAH.png', // Replace 'prayer_icon.png' with your icon asset path
+                      width: 40, // Adjust width as needed
+                      height: 40, // Adjust height as needed
+                    ),
+                    Expanded(
+                      child: Text(
+                        controller.prayerTimes_iqama[index],
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ] else if (controller.dayName != "Friday") ...[
+                    Expanded(
+                      child: Text(
+                        controller.getPrayerName(index),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: index == 2 ? 12 : 16,
+                        ),
+                      ),
+                    ),
+                    Image.asset(
+                      'images/Azan.png', // Replace 'prayer_icon.png' with your icon asset path
+                      width: 0, // Adjust width as needed
+                      height: 40, // Adjust height as needed
+                      color: Colors.transparent,
+                    ),
+                    Expanded(
+                      child: Text(
+                        controller.prayerTimes_iqama[index],
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ] else if (controller.dayName == "Friday") ...[
+                    Expanded(
+                      child: Text(
+                        index == 2
+                            ? "Jumu'ah"
+                            : controller.getPrayerName(index),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: index == 2 ? 12 : 16,
+                        ),
+                      ),
+                    ),
+                    if (index != 1 && index != 2) ...[
+                      Image.asset(
+                        'images/Azan.png', // Replace 'prayer_icon.png' with your icon asset path
+                        width: 40, // Adjust width as needed
+                        height: 40, // Adjust height as needed
+                      ),
+                      Expanded(
+                        child: Text(
+                          controller.prayertime_12format(
+                              controller.prayerTimes[index]),
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Image.asset(
+                        'images/IQAMAH.png', // Replace 'prayer_icon.png' with your icon asset path
+                        width: 40, // Adjust width as needed
+                        height: 40, // Adjust height as needed
+                      ),
+                      Expanded(
+                        child: Text(
+                          controller.prayertime_12format(
+                              controller.prayerTimes_iqama[index]),
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ] else if (index == 1) ...[
+                      Image.asset(
+                        'images/Azan.png', // Replace 'prayer_icon.png' with your icon asset path
+                        width: 0, // Adjust width as needed
+                        height: 40, // Adjust height as needed
+                        color: Colors.transparent,
+                      ),
+                      Expanded(
+                        child: Text(
+                          controller.prayertime_12format(
+                              controller.prayerTimes_iqama[index]),
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ] else if (index == 2) ...[
+                      Image.asset(
+                        'images/IQAMAH.png', // Replace 'prayer_icon.png' with your icon asset path
+                        width: 30, // Adjust width as needed
+                        height: 40, // Adjust height as needed
+                      ),
+                      Expanded(
+                        child: Text(
+                          controller.prayertime_12format(
+                              controller.prayerTimes_Jumuah[0]),
+                          style: TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Image.asset(
+                        'images/IQAMAH.png', // Replace 'prayer_icon.png' with your icon asset path
+                        width: 30, // Adjust width as needed
+                        height: 40, // Adjust height as needed
+                      ),
+                      Expanded(
+                        child: Text(
+                          controller.prayertime_12format(
+                              controller.prayerTimes_Jumuah[1]),
+                          style: TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Image.asset(
+                        'images/IQAMAH.png', // Replace 'prayer_icon.png' with your icon asset path
+                        width: 30, // Adjust width as needed
+                        height: 40, // Adjust height as needed
+                      ),
+                      Expanded(
+                        child: Text(
+                          controller.prayertime_12format(
+                              controller.prayerTimes_Jumuah[2]),
+                          style: TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ]
+                  ]
                 ],
               ),
             ],
