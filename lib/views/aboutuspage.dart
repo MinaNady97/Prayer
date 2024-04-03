@@ -50,7 +50,7 @@ class About_us_page extends StatelessWidget {
                   "OBJECTIVE",
                   style: TextStyle(
                       fontSize: 25,
-                      color: Color.fromARGB(220, 127, 41, 53),
+                      color: controller.primary_dark_color.value,
                       fontFamily: 'Poppins',
                       fontWeight: FontWeight.w900),
                   textAlign: TextAlign.center,
@@ -74,7 +74,7 @@ class About_us_page extends StatelessWidget {
                   "MISSION",
                   style: TextStyle(
                       fontSize: 25,
-                      color: Color.fromARGB(220, 127, 41, 53),
+                      color: controller.primary_dark_color.value,
                       fontFamily: 'Poppins',
                       fontWeight: FontWeight.w900),
                   textAlign: TextAlign.center,
@@ -98,7 +98,7 @@ class About_us_page extends StatelessWidget {
                   "VISION",
                   style: TextStyle(
                       fontSize: 25,
-                      color: Color.fromARGB(220, 127, 41, 53),
+                      color: controller.primary_dark_color.value,
                       fontFamily: 'Poppins',
                       fontWeight: FontWeight.w900),
                   textAlign: TextAlign.center,

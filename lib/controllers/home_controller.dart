@@ -370,25 +370,36 @@ class MainController extends GetxController {
     }
   }
 
-  Future<void> unread() async {
+  Future<void> unread_notification() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    CollectionReference notificationsCollection =
-        FirebaseFirestore.instance.collection('notifications');
-    QuerySnapshot snapshot = await notificationsCollection.get();
-    notification_count = snapshot.size;
-    int? readedN = prefs.getInt("readedN");
-    if (readedN == null) {
-      unreadcount.value = notification_count!;
+    String? lastTimeStr = prefs.getString("lasttime");
+    if (lastTimeStr != null) {
+      DateTime lastTime =
+          DateTime.parse(lastTimeStr); // Parse DateTime from string
+      Timestamp readedN =
+          Timestamp.fromDate(lastTime); // Convert DateTime to Timestamp
+
+      CollectionReference notificationsCollection =
+          FirebaseFirestore.instance.collection('notifications');
+
+      QuerySnapshot snapshot = await notificationsCollection
+          .where('timestamp', isGreaterThan: readedN)
+          .get();
+
+      unreadcount.value = snapshot.docs.length;
+      print("unreadcount");
+      print(unreadcount.value);
     } else {
-      unreadcount.value = notification_count! - readedN;
+      setthereadednotification();
+      unread_notification();
     }
-    print("unread count: " + unreadcount.value.toString());
     update();
   }
 
   void setthereadednotification() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setInt("readedN", notification_count!);
+    prefs.setString("lasttime", DateTime.now().toString());
+    print("number of notification before zero");
     print(unreadcount.value);
     unreadcount.value = 0;
     update();
@@ -467,7 +478,7 @@ class MainController extends GetxController {
 
     FirebaseMessaging.instance.subscribeToTopic("users");
 
-    fcmcofing();
+    await fcmconfig();
     await get_coordinates_from_DB();
     await fetchPrayerTimings();
     super.onInit();
@@ -1149,9 +1160,14 @@ class MainController extends GetxController {
 
   String prayertime_12format(String time) {
     List time_hour_minute = _splitHourMinute(time);
-    return time_hour_minute[0] <= 12
-        ? "${time}AM"
-        : "0${time_hour_minute[0] - 12}:${time_hour_minute[1]}PM";
+    int hour = time_hour_minute[0];
+    int minute = time_hour_minute[1];
+
+    return hour <= 12 && hour != 0
+        ? "$time AM"
+        : hour == 0
+            ? "${'${hour + 12}'}:${(minute < 10) ? '0$minute' : '$minute'} AM"
+            : "${hour - 12 < 10 ? '0${hour - 12}' : hour - 12}:${(minute < 10) ? '0$minute' : '$minute'} PM";
   }
 
   List<Map<String, dynamic>> createPrayerInfoList(

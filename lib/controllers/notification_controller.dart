@@ -1,8 +1,11 @@
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
+import 'package:sametsalah/controllers/home_controller.dart';
 
 abstract class notification_controller extends GetxController {}
+
+final MainController controller = Get.put(MainController());
 
 class notification_controllerImp extends notification_controller {
   StreamController<QuerySnapshot> _notificationsStreamController =
@@ -16,6 +19,7 @@ class notification_controllerImp extends notification_controller {
 
   @override
   void onInit() async {
+    controller.setthereadednotification();
     super.onInit(); // Call super.onInit() first
     await get_notifications_from_DB();
   }

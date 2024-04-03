@@ -13,6 +13,7 @@ import 'package:sametsalah/views/notificationpage.dart';
 import 'package:sametsalah/views/settingspage.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 final MainController controller = Get.put(MainController());
 
@@ -27,6 +28,11 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     final phone_h = MediaQuery.of(context);
+    print("fdassssssssssssssssssssssssssssssssssssssssssssss");
+
+    print(phone_h.size.height);
+    print(phone_h.size.width);
+
     Timer.periodic(const Duration(seconds: 1), (timer) {
       controller.updateTime();
     });
@@ -75,7 +81,7 @@ class _MyAppState extends State<MyApp> {
                       InkWell(
                         onTap: () {
                           Get.to(NotificationPage());
-                          controller.setthereadednotification();
+                         
                         },
                         child: Icon(Icons.notifications_none,
                             size: 30,
@@ -89,16 +95,26 @@ class _MyAppState extends State<MyApp> {
                           right: 0,
                           top: 0,
                           child: Container(
-                            padding: EdgeInsets.all(4),
+                            padding: EdgeInsets.all(1),
                             decoration: BoxDecoration(
                               color: Colors.red,
                               shape: BoxShape.circle,
                             ),
-                            child: Text(
-                              '${controller.unreadcount}',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
+                            child: Center(
+                              child: SizedBox(
+                                width: 13,
+                                height: 13,
+                                child: Center(
+                                  child: AutoSizeText(
+                                    '${controller.unreadcount}',
+                                    textScaleFactor: 0.8,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                    ),
+                                    maxLines: 1,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -115,52 +131,108 @@ class _MyAppState extends State<MyApp> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       SizedBox(height: 0.2 * phone_h.size.height),
-                      Text(
-                        controller.dayName,
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 17,
-                          fontWeight: FontWeight.w500,
+                      Center(
+                        child: SizedBox(
+                          width: phone_h.size.width * 0.2605,
+                          height: phone_h.size.height * 0.048,
+                          child: Center(
+                            child: AutoSizeText(
+                              controller.dayName,
+                              textScaleFactor: phone_h.size.width * 0.004271,
+                              style: const TextStyle(
+                                fontFamily: 'Arial',
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                            ),
+                          ),
                         ),
                       ),
-                      Text(
-                        controller.hijriDate,
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 17,
-                          fontWeight: FontWeight.w500,
+                      Center(
+                        child: SizedBox(
+                          width: phone_h.size.width * 0.65,
+                          height: phone_h.size.height * 0.048,
+                          child: Center(
+                            child: AutoSizeText(
+                              controller.hijriDate,
+                              textScaleFactor: phone_h.size.width * 0.00391,
+                              style: const TextStyle(
+                                fontFamily: 'Arial',
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                            ),
+                          ),
                         ),
                       ),
-                      Text(
-                        controller.gregorianDateDisplay,
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 17,
-                          fontWeight: FontWeight.w500,
+                      Center(
+                        child: SizedBox(
+                          width: phone_h.size.width * 0.65,
+                          height: phone_h.size.height * 0.048,
+                          child: Center(
+                            child: AutoSizeText(
+                              controller.gregorianDateDisplay,
+                              textScaleFactor: phone_h.size.width * 0.00391,
+                              style: const TextStyle(
+                                fontFamily: 'Arial',
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                            ),
+                          ),
                         ),
                       ),
-                      Text(
-                        controller.currentTime.value,
-                        style: TextStyle(fontSize: 60),
-                      ),
-                      Text(
-                        "سَمِعْنَا وَأَطَعْنَا ۖ غُفْرَانَكَ رَبَّنَا وَإِلَيْكَ الْمَصِيرُ",
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
+                      Center(
+                        child: SizedBox(
+                          width: phone_h.size.width * 0.7793,
+                          height: phone_h.size.height * 0.0954,
+                          child: Center(
+                            child: AutoSizeText(
+                              controller.prayertime_12format(
+                                  controller.currentTime.value),
+                              textScaleFactor: phone_h.size.width * 0.0105,
+                              style: const TextStyle(
+                                fontFamily: 'Arial',
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                            ),
+                          ),
                         ),
                       ),
-                      Text(
-                        "Islamic Center of Brushy Creek",
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 17,
-                          fontWeight: FontWeight.w500,
+                      Center(
+                        child: SizedBox(
+                          width: phone_h.size.width,
+                          height: phone_h.size.height * 0.048,
+                          child: Center(
+                            child: AutoSizeText(
+                              "سَمِعْنَا وَأَطَعْنَا ۖ غُفْرَانَكَ رَبَّنَا وَإِلَيْكَ الْمَصِيرُ",
+                              textScaleFactor: phone_h.size.width * 0.00417,
+                              style: const TextStyle(
+                                fontFamily: 'Arial',
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                            ),
+                          ),
                         ),
                       ),
-                      SizedBox(
-                        height: 10,
+                      Center(
+                        child: SizedBox(
+                          width: phone_h.size.width * 0.9,
+                          height: phone_h.size.height * 0.048,
+                          child: Center(
+                            child: AutoSizeText(
+                              "Islamic Center of Brushy Creek",
+                              textScaleFactor: phone_h.size.width * 0.003646,
+                              style: const TextStyle(
+                                fontFamily: 'Arial',
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                            ),
+                          ),
+                        ),
                       ),
                       Expanded(
                         child: ListView.builder(
@@ -267,6 +339,7 @@ class prayertimecard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final phone_h = MediaQuery.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2.0),
       child: Card(
@@ -278,7 +351,7 @@ class prayertimecard extends StatelessWidget {
           borderRadius: BorderRadius.circular(15),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 10.0),
+          padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 7.0),
           child: Stack(
             children: [
               Row(
@@ -292,154 +365,290 @@ class prayertimecard extends StatelessWidget {
                     width: 5,
                   ),
                   if (index != 1 && controller.dayName != "Friday") ...[
-                    Expanded(
-                      child: Text(
-                        controller.getPrayerName(index),
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
+                    SizedBox(
+                      width: phone_h.size.width * 0.25,
+                      height: phone_h.size.height * 0.035,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          AutoSizeText(
+                            controller.getPrayerName(index),
+                            textScaleFactor: phone_h.size.width * 0.00208,
+                            style: const TextStyle(
+                              fontFamily: 'Arial',
+                              fontSize: 25,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                          ),
+                        ],
                       ),
                     ),
                     Image.asset(
                       'images/Azan.png', // Replace 'prayer_icon.png' with your icon asset path
-                      width: 40, // Adjust width as needed
-                      height: 40, // Adjust height as needed
+                      width: 35, // Adjust width as needed
+                      height: 35, // Adjust height as needed
                     ),
-                    Expanded(
-                      child: Text(
-                        "${controller.prayerTimes[index]} ",
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
+                    SizedBox(
+                      width: phone_h.size.width * 0.23,
+                      height: phone_h.size.height * 0.037,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          AutoSizeText(
+                            controller.prayertime_12format(
+                                controller.prayerTimes[index]),
+                            textScaleFactor: phone_h.size.width * 0.003125,
+                            style: const TextStyle(
+                              fontFamily: 'Arial',
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                          ),
+                        ],
                       ),
                     ),
                     Image.asset(
                       'images/IQAMAH.png', // Replace 'prayer_icon.png' with your icon asset path
-                      width: 40, // Adjust width as needed
-                      height: 40, // Adjust height as needed
+                      width: 35, // Adjust width as needed
+                      height: 35, // Adjust height as needed
                     ),
-                    Expanded(
-                      child: Text(
-                        controller.prayerTimes_iqama[index],
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
+                    SizedBox(
+                      width: phone_h.size.width * 0.2,
+                      height: phone_h.size.height * 0.037,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          AutoSizeText(
+                            controller.prayertime_12format(
+                                controller.prayerTimes_iqama[index]),
+                            textScaleFactor: phone_h.size.width * 0.003125,
+                            style: const TextStyle(
+                              fontFamily: 'Arial',
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                          ),
+                        ],
                       ),
                     ),
                   ] else if (controller.dayName != "Friday") ...[
-                    Expanded(
-                      child: Text(
-                        controller.getPrayerName(index),
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: index == 2 ? 12 : 16,
-                        ),
+                    SizedBox(
+                      width: phone_h.size.width * 0.47,
+                      height: phone_h.size.height * 0.035,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          AutoSizeText(
+                            controller.getPrayerName(index),
+                            textScaleFactor: phone_h.size.width * 0.0020833,
+                            style: const TextStyle(
+                              fontFamily: 'Arial',
+                              fontSize: 25,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                          ),
+                        ],
                       ),
                     ),
                     Image.asset(
                       'images/Azan.png', // Replace 'prayer_icon.png' with your icon asset path
                       width: 0, // Adjust width as needed
-                      height: 40, // Adjust height as needed
+                      height: 35, // Adjust height as needed
                       color: Colors.transparent,
                     ),
-                    Expanded(
-                      child: Text(
-                        controller.prayerTimes_iqama[index],
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
+                    SizedBox(
+                      width: phone_h.size.width * 0.2,
+                      height: phone_h.size.height * 0.037,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          AutoSizeText(
+                            controller.prayertime_12format(
+                                controller.prayerTimes_iqama[index]),
+                            textScaleFactor: phone_h.size.width * 0.003125,
+                            style: const TextStyle(
+                              fontFamily: 'Arial',
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                          ),
+                        ],
                       ),
                     ),
                   ] else if (controller.dayName == "Friday") ...[
-                    Expanded(
-                      child: Text(
-                        index == 2
-                            ? "Jumu'ah"
-                            : controller.getPrayerName(index),
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: index == 2 ? 12 : 16,
-                        ),
+                    SizedBox(
+                      width: index != 1 && index != 2
+                          ? phone_h.size.width * 0.25
+                          : index == 1
+                              ? phone_h.size.width * 0.47
+                              : phone_h.size.width * 0.22,
+                      height: phone_h.size.height * 0.035,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          AutoSizeText(
+                            index == 2
+                                ? "Jumu'ah"
+                                : controller.getPrayerName(index),
+                            textScaleFactor: phone_h.size.width * 0.003125,
+                            style: const TextStyle(
+                              fontFamily: 'Arial',
+                              fontSize: 25,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                          ),
+                        ],
                       ),
                     ),
                     if (index != 1 && index != 2) ...[
                       Image.asset(
                         'images/Azan.png', // Replace 'prayer_icon.png' with your icon asset path
-                        width: 40, // Adjust width as needed
-                        height: 40, // Adjust height as needed
+                        width: 35, // Adjust width as needed
+                        height: 35, // Adjust height as needed
                       ),
-                      Expanded(
-                        child: Text(
-                          controller.prayertime_12format(
-                              controller.prayerTimes[index]),
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
+                      SizedBox(
+                        width: phone_h.size.width * 0.23,
+                        height: phone_h.size.height * 0.037,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            AutoSizeText(
+                              controller.prayertime_12format(
+                                  controller.prayerTimes[index]),
+                              textScaleFactor: phone_h.size.width * 0.003125,
+                              style: const TextStyle(
+                                fontFamily: 'Arial',
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                            ),
+                          ],
                         ),
                       ),
                       Image.asset(
                         'images/IQAMAH.png', // Replace 'prayer_icon.png' with your icon asset path
-                        width: 40, // Adjust width as needed
-                        height: 40, // Adjust height as needed
+                        width: 35, // Adjust width as needed
+                        height: 35, // Adjust height as needed
                       ),
-                      Expanded(
-                        child: Text(
-                          controller.prayertime_12format(
-                              controller.prayerTimes_iqama[index]),
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
+                      SizedBox(
+                        width: phone_h.size.width * 0.2,
+                        height: phone_h.size.height * 0.037,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            AutoSizeText(
+                              controller.prayertime_12format(
+                                  controller.prayerTimes_iqama[index]),
+                              textScaleFactor: phone_h.size.width * 0.003125,
+                              style: const TextStyle(
+                                fontFamily: 'Arial',
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                            ),
+                          ],
                         ),
                       ),
                     ] else if (index == 1) ...[
                       Image.asset(
                         'images/Azan.png', // Replace 'prayer_icon.png' with your icon asset path
                         width: 0, // Adjust width as needed
-                        height: 40, // Adjust height as needed
+                        height: 35, // Adjust height as needed
                         color: Colors.transparent,
                       ),
-                      Expanded(
-                        child: Text(
-                          controller.prayertime_12format(
-                              controller.prayerTimes_iqama[index]),
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
+                      SizedBox(
+                        width: phone_h.size.width * 0.2,
+                        height: phone_h.size.height * 0.037,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            AutoSizeText(
+                              controller.prayertime_12format(
+                                  controller.prayerTimes_iqama[index]),
+                              textScaleFactor: phone_h.size.width * 0.003125,
+                              style: const TextStyle(
+                                fontFamily: 'Arial',
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                            ),
+                          ],
                         ),
                       ),
                     ] else if (index == 2) ...[
                       Image.asset(
                         'images/IQAMAH.png', // Replace 'prayer_icon.png' with your icon asset path
-                        width: 30, // Adjust width as needed
-                        height: 40, // Adjust height as needed
+                        width: 35, // Adjust width as needed
+                        height: 35, // Adjust height as needed
                       ),
-                      Expanded(
-                        child: Text(
-                          controller.prayertime_12format(
-                              controller.prayerTimes_Jumuah[0]),
-                          style: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold),
+                      SizedBox(
+                        width: phone_h.size.width * 0.12,
+                        height: phone_h.size.height * 0.037,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            AutoSizeText(
+                              controller.prayertime_12format(
+                                  controller.prayerTimes_Jumuah[0]),
+                              textScaleFactor: phone_h.size.width * 0.0018,
+                              style: const TextStyle(
+                                fontFamily: 'Arial',
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                            ),
+                          ],
                         ),
                       ),
                       Image.asset(
                         'images/IQAMAH.png', // Replace 'prayer_icon.png' with your icon asset path
-                        width: 30, // Adjust width as needed
-                        height: 40, // Adjust height as needed
+                        width: 35, // Adjust width as needed
+                        height: 35, // Adjust height as needed
                       ),
-                      Expanded(
-                        child: Text(
-                          controller.prayertime_12format(
-                              controller.prayerTimes_Jumuah[1]),
-                          style: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold),
+                      SizedBox(
+                        width: phone_h.size.width * 0.12,
+                        height: phone_h.size.height * 0.037,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            AutoSizeText(
+                              controller.prayertime_12format(
+                                  controller.prayerTimes_Jumuah[1]),
+                              textScaleFactor: phone_h.size.width * 0.0018,
+                              style: const TextStyle(
+                                fontFamily: 'Arial',
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                            ),
+                          ],
                         ),
                       ),
                       Image.asset(
                         'images/IQAMAH.png', // Replace 'prayer_icon.png' with your icon asset path
-                        width: 30, // Adjust width as needed
-                        height: 40, // Adjust height as needed
+                        width: 35, // Adjust width as needed
+                        height: 35, // Adjust height as needed
                       ),
-                      Expanded(
-                        child: Text(
-                          controller.prayertime_12format(
-                              controller.prayerTimes_Jumuah[2]),
-                          style: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold),
+                      SizedBox(
+                        width: phone_h.size.width * 0.13,
+                        height: phone_h.size.height * 0.037,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            AutoSizeText(
+                              controller.prayertime_12format(
+                                  controller.prayerTimes_Jumuah[2]),
+                              textScaleFactor: phone_h.size.width * 0.0018,
+                              style: const TextStyle(
+                                fontFamily: 'Arial',
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                            ),
+                          ],
                         ),
                       ),
                     ]

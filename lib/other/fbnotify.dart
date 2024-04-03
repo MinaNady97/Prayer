@@ -17,27 +17,29 @@ Future<void> requestPermissionNotification() async {
     sound: true,
   );
 }
-
-fcmcofing() {
-  FirebaseMessaging.onMessage.listen((message) {
-    controller.unread();
+Future<void> fcmconfig() async {
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    // Handle notification when the app is in the foreground
+    // Show dialog or custom UI
     FlutterRingtonePlayer().playNotification();
     Get.defaultDialog(
-        title: message.notification!.title!,
-        titleStyle: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
-        middleTextStyle:
-            TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
-        middleText: message.notification!.body!,
-        backgroundColor: Colors.grey,
-        actions: [
-          MaterialButton(
-              color: Colors.grey,
-              onPressed: () {
-                Get.back();
-              },
-              child: Text("Ok".tr,
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold))),
-        ]);
+      title: message.notification!.title!,
+      titleStyle: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
+      middleTextStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+      middleText: message.notification!.body!,
+      backgroundColor: Colors.grey,
+      actions: [
+        MaterialButton(
+          color: Colors.grey,
+          onPressed: () {
+            Get.back();
+          },
+          child: Text(
+            "Ok".tr,
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
+    );
   });
 }

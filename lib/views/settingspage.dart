@@ -36,7 +36,7 @@ class _SettingsPage extends State<SettingsPage> {
               children: [
                 ListTile(
                     title: Text(
-                      'Auto Silent',
+                      'Auto silent',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -67,7 +67,7 @@ class _SettingsPage extends State<SettingsPage> {
                     )),
                 ListTile(
                   title: Text(
-                    'Prayer Time Indecator',
+                    'Prayer time indicator',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -85,7 +85,7 @@ class _SettingsPage extends State<SettingsPage> {
                 ),
                 ListTile(
                   title: Text(
-                    'Dark Theme',
+                    'Dark theme',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -120,7 +120,7 @@ class _SettingsPage extends State<SettingsPage> {
                                   value ? "red" : "blue";
                               controller.primary_dark_color.value = value
                                   ? Color.fromARGB(255, 127, 41, 53)
-                                  : Color.fromARGB(255, 51, 72, 99);
+                                  : Color.fromARGB(255, 1, 50, 90);
                               controller.primary_light_color.value = value
                                   ? Color.fromARGB(255, 127, 41, 53)
                                   : Color.fromARGB(255, 1, 50, 90);

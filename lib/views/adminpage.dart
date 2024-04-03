@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sametsalah/other/vali_input.dart';
@@ -16,14 +17,11 @@ class ManagePage extends StatelessWidget {
     ManageControllerImp controller = Get.put(ManageControllerImp());
     double w = Get.width * 0.2;
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Admin Page"),
-      ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10.0),
+        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 30),
         child: ListView(
           children: [
-            Text(
+            AutoSizeText(
               'Send Notification',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),

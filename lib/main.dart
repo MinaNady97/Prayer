@@ -31,7 +31,6 @@ Future<void> main() async {
     return;
   }
   await controller.initializeService();
-
   //constants = controller.constants;
   controller.updateTime();
   final now_ = DateTime.now();
@@ -65,7 +64,7 @@ Future<void> main() async {
   // Call setupFirebaseMessaging to initialize Firebase Cloud Messaging
   controller.setupFirebaseMessaging();
   await controller.fetchPrayerTimings();
-  await controller.unread();
+  await controller.unread_notification();
 
   if (await controller.getTheme() == null) {
     instance!.setBool("isDark", false);
@@ -82,9 +81,10 @@ Future<void> main() async {
     print("dfdczzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzx");
     controller.isRed = RxBool(await controller.getThemeColor());
     controller.theme_color.value = controller.isRed.isTrue ? "red" : "blue";
+    controller.selectedSky = controller.isRed.isTrue ? Sky.red : Sky.blue;
     controller.primary_dark_color.value = controller.isRed.isTrue
         ? Color.fromARGB(255, 127, 41, 53)
-        : Color.fromARGB(255, 51, 72, 99);
+        : Color.fromARGB(255, 1, 50, 90);
     controller.primary_light_color.value = controller.isRed.isTrue
         ? Color.fromARGB(255, 127, 41, 53)
         : Color.fromARGB(255, 1, 50, 90);

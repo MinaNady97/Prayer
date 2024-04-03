@@ -32,7 +32,7 @@ class LoginPage extends StatelessWidget {
                 child: Column(
                   children: [
                     Text(
-                      "Login for Admin",
+                      "Admin Login",
                       style: TextStyle(
                           color: controller.isDark.isTrue
                               ? controller.primary_dark_color.value
@@ -56,7 +56,7 @@ class LoginPage extends StatelessWidget {
                         return validatefunc_input(value!, 5, 100, "username");
                       },
                       label: "user name",
-                      hinttext: "enter your user name",
+                      hinttext: "Enter your user name",
                       icondata: Icons.email_outlined,
                       mycontroller: controller_.email,
                     ),

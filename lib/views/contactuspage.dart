@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sametsalah/controllers/home_controller.dart';
@@ -36,10 +37,10 @@ class Contact_Page extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      "(512) 850-4786".tr,
+                    AutoSizeText(
+                      "(512) 850-4786",
+                      textScaleFactor: 1.7,
                       style: TextStyle(
-                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.start,
@@ -90,9 +91,9 @@ class Contact_Page extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("info@icbrushycreek.org".tr,
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
+                      AutoSizeText("info@icbrushycreek.org",
+                          textScaleFactor: 1.7,
+                          style: TextStyle(fontWeight: FontWeight.bold),
                           textAlign: TextAlign.start),
                       Icon(
                         Icons.mail,
@@ -116,9 +117,9 @@ class Contact_Page extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("ICBC location".tr,
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
+                      AutoSizeText("ICBC location",
+                          textScaleFactor: 1.7,
+                          style: TextStyle(fontWeight: FontWeight.bold),
                           textAlign: TextAlign.start),
                       Icon(
                         Icons.location_on,
