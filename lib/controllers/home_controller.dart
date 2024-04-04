@@ -76,9 +76,10 @@ void onstart(ServiceInstance service) async {
       var today = dateFormat.format(now);
 
       print("today is :" + today);
-      if (control.gregorianDate.split(" ")[0] != now.day) {
+      print(control.dayName);
+      if (control.dayName != today) {
         print("new time fetched");
-        control.fetchPrayerTimings();
+        await control.fetchPrayerTimings();
       }
       if (today == "Friday") {
         var prayerTimes = [...control.prayerTimes];
@@ -87,7 +88,7 @@ void onstart(ServiceInstance service) async {
         var prayerTimes_iqama = [...control.prayerTimes_iqama];
         prayerTimes_iqama.removeAt(2);
         prayerTimes_iqama.insertAll(2, control.prayerTimes_Jumuah);
-
+        print(prayerTimes);
         closetPrayerInfoList = control.createPrayerInfoList(
             prayerTimes, prayerTimes_iqama, control.getPrayerName_jumaha, 0);
       } else {
@@ -130,81 +131,16 @@ void onstart(ServiceInstance service) async {
         control.flag = true;
       }
 
-      //
-      // closest_prayer_time_now_list = control.findClosestPrayerTime_abs();
-      // var index = control.prayerTimes.indexOf(closest_prayer_time_now_list[0]);
-      // closest_prayer_time_now = control.getPrayerName(index);
-
-      // // if (closest_prayer_time_now_list[1] == 0 &&
-      // //     closest_prayer_time_now_list[2] <= 40) {
-      // if (control.flag == true) {
-      //   key = closest_prayer_time_now;
-      // }
-
-      // print("closest_prayer_time_now $closest_prayer_time_now");
-      // print("closest_prayer_time_now_in_min $closest_prayer_time_now_list");
-
-      // print("key :$key");
-      // print("last key $last_key");
-
-      // if (key != null && key != last_key) {
-      //   List time_interval_list = control.find_intrval_bet_now__and_PrayerTime(
-      //       control.getPrayerindex(key!, today));
-      //   print("time interval list $time_interval_list");
-      //   sign = time_interval_list[2];
-      //   time_interval = time_interval_list[1];
-      //   time_interval_h = time_interval_list[0];
-      // }
-
-      // print("control flag ${control.flag}");
-      // print("time interval:" + time_interval.toString());
-
-      // if (key != null && control.flag == true && key != last_key) {
-      //   print('The key for the value is: $key');
-
-      //   time_of_aqama_of_current_prayer =
-      //       control.find_intrval_bet_iqama__and_PrayerTime(index)[1];
-      //   //print("sign" + sign);
-      //   print(time_interval_h);
-      //   if (sign == "+" &&
-      //       time_interval >= time_of_aqama_of_current_prayer &&
-      //       time_interval <= time_of_aqama_of_current_prayer + 15 &&
-      //       time_interval_h == 0) {
-      //     print("checking");
-      //     var checkd = await control.checkLocation();
-      //     if (checkd) {
-      //       control.flag = false;
-      //     } else if (time_interval > time_of_aqama_of_current_prayer + 15) {
-      //       control.flag = true;
-      //       last_key = key;
-      //       key = null;
-      //       time_of_aqama_of_current_prayer = 999999999999999999;
-      //       time_interval = 999999999999999999;
-      //       time_interval_h = 99999999999999999;
-      //     }
-      //   }
-      // } else if (time_interval > time_of_aqama_of_current_prayer + 15 &&
-      //     sign == "+" &&
-      //     control.flag == false) {
-      //   //print("here 2");
-      //   time_of_aqama_of_current_prayer = 999999999999999999;
-      //   control.enable_sound();
-      //   control.flag = true;
-      //   time_interval = 999999999999999999;
-      //   time_interval_h = 99999999999999999;
-      //   last_key = key;
-      //   key = null;
-      // }
-      // print("time fo aqama:$time_of_aqama_of_current_prayer");
-      // print(isNotification);
       if (service is AndroidServiceInstance) {
         if (await service.isForegroundService() && isNotification == true) {
           var min_distance = await control.getmindistance();
-          if (now.hour > int.parse(control.prayerTimes[4].split(":")[0]) ||
-              (now.hour == int.parse(control.prayerTimes[4].split(":")[0]) &&
+          if (now.hour > int.parse(control.prayerTimes[5].split(":")[0]) ||
+              (now.hour == int.parse(control.prayerTimes[5].split(":")[0]) &&
                   now.minute >=
-                      int.parse(control.prayerTimes[4].split(":")[1]))) {
+                      int.parse(control.prayerTimes[5].split(":")[1]))) {
             nextday = 1;
+          } else {
+            nextday = 0;
           }
           var nextPrayerInfoList;
           if (today == "Friday") {
@@ -237,10 +173,10 @@ void onstart(ServiceInstance service) async {
           try {
             var status;
 
-            if (is_silent) {
-              status = "silent";
-            } else {
+            if (control.flag) {
               status = "normal";
+            } else {
+              status = "silent";
             }
             print("next prayer ${NextPrayer}");
             var next_prayer_key = NextPrayer!["key"];
