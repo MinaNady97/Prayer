@@ -37,6 +37,10 @@ Map<Sky, Color> skyColors = <Sky, Color>{
   Sky.blue: const Color.fromARGB(255, 1, 50, 90),
 };
 
+String addLeadingZero(int value) {
+  return value.toString().padLeft(2, '0');
+}
+
 @pragma('vm:entry-point')
 void onstart(ServiceInstance service) async {
   DartPluginRegistrant.ensureInitialized();
@@ -79,7 +83,10 @@ void onstart(ServiceInstance service) async {
       print(control.dayName);
       if (control.dayName != today) {
         print("new time fetched");
-        await control.fetchPrayerTimings();
+        final now = DateTime.now();
+        final String formattedDate =
+            '${addLeadingZero(now.day)}-${addLeadingZero(now.month)}-${addLeadingZero(now.year)}';
+        await control.fetchPrayerTimings(formattedDate);
       }
       if (today == "Friday") {
         var prayerTimes = [...control.prayerTimes];
@@ -266,6 +273,7 @@ class MainController extends GetxController {
   RxBool isRed = true.obs;
   RxBool isNotification = true.obs;
   RxBool service_is_runing = false.obs;
+  RxBool homepage_data_changed = true.obs;
   List<QueryDocumentSnapshot> coordinates = [];
   List<String> prayerTimes = List.filled(6, '00:00');
   List<String> prayerTimes_iqama = List.filled(6, '00:00');
@@ -276,12 +284,15 @@ class MainController extends GetxController {
   String targetLatitude = "";
   String targetLongitude = "";
   String dayName = "";
+  String selectedDayName = "";
   String gregorianDate = "";
   String gregorianDateDisplay = "";
   String hijriDate = "";
   late var isRunning;
   bool flag = true;
   bool data_month_flag = false;
+  String first_date = "";
+  String last_date = "";
   //List<String> prayerTimes_ = List.filled(5, '');
   String theme_value = "dark";
   bool flag_test = false;
@@ -416,7 +427,11 @@ class MainController extends GetxController {
 
     await fcmconfig();
     await get_coordinates_from_DB();
-    await fetchPrayerTimings();
+    // Get the current date
+    final now = DateTime.now();
+    final String formattedDate =
+        '${addLeadingZero(now.day)}-${addLeadingZero(now.month)}-${addLeadingZero(now.year)}';
+    await fetchPrayerTimings(formattedDate);
     super.onInit();
   }
 
@@ -538,13 +553,8 @@ class MainController extends GetxController {
     coordinates.addAll(coordinates_snapshot.docs); // add docs to list
   }
 
-  Future<void> fetchPrayerTimings() async {
+  Future<void> fetchPrayerTimings(String formattedDate) async {
     try {
-      // Get the current date
-      final now = DateTime.now();
-      final String formattedDate =
-          '${addLeadingZero(now.day)}-${addLeadingZero(now.month)}-${addLeadingZero(now.year)}';
-
       // Retrieve prayer timings for the current date from local storage
       final List<dynamic>? storedPrayerTimes =
           await PrayerTimesStorage.getPrayerTimesForDate(formattedDate);
@@ -554,13 +564,18 @@ class MainController extends GetxController {
         prayerTimes_ = storedPrayerTimes.sublist(0, 12).cast<String>();
         prayerTimes_Jumuah_ = storedPrayerTimes.sublist(16, 19).cast<String>();
 
+        final now_ = DateTime.now();
+        final String currentDay =
+            '${addLeadingZero(now_.day)}-${addLeadingZero(now_.month)}-${addLeadingZero(now_.year)}';
+
         print(prayerTimes_);
-
-        dayName = storedPrayerTimes[12];
-        gregorianDate = storedPrayerTimes[13];
-        gregorianDateDisplay = storedPrayerTimes[14];
-        hijriDate = storedPrayerTimes[15];
-
+        if (currentDay == formattedDate) {
+          dayName = storedPrayerTimes[12];
+          gregorianDate = storedPrayerTimes[13];
+          gregorianDateDisplay = storedPrayerTimes[14];
+          hijriDate = storedPrayerTimes[15];          
+        } 
+        selectedDayName = storedPrayerTimes[12];
         // Now you have the prayer times and additional information for the current date
         // You can use this data as needed
 
@@ -581,12 +596,16 @@ class MainController extends GetxController {
         prayerTimes_Jumuah[0] = prayerTimes_Jumuah_[0];
         prayerTimes_Jumuah[1] = prayerTimes_Jumuah_[1];
         prayerTimes_Jumuah[2] = prayerTimes_Jumuah_[2];
+        first_date = storedPrayerTimes[19];
+        last_date = storedPrayerTimes[20];
       } else {
         throw Exception('No locally saved data found for the current date');
       }
     } catch (e) {
       // Handle errors
     }
+    homepage_data_changed.value = homepage_data_changed.value ? false : true;
+    print(homepage_data_changed.value);
   }
 
   String? getKeyFromValue(Map<String, String> map, String value) {
@@ -849,6 +868,25 @@ class MainController extends GetxController {
             xmlDoc.findAllElements('iqama').toList();
         print("fgfhjhjfjfhjfkjfjhjkjhjfkf");
         print(prayerElements.length);
+        if (prayerElements.isNotEmpty) {
+          final String firstGregorianDateStr = prayerElements.first
+              .findElements('Date')
+              .single
+              .innerText; // First gregorianDateStr
+          final String lastGregorianDateStr = prayerElements.last
+              .findElements('Date')
+              .single
+              .innerText; // Last gregorianDateStr
+
+          // Save the first and last gregorianDateStr in start_date and last_date
+          first_date = reverseDateFormat(firstGregorianDateStr);
+          last_date = reverseDateFormat(lastGregorianDateStr);
+        }
+
+        // Rest of your code for processing prayer timings...
+        else {
+          throw Exception('Failed to load prayer timings');
+        }
         for (var prayerElement in prayerElements) {
           String gregorianDateStr = prayerElement
               .findElements('Date')
@@ -856,7 +894,7 @@ class MainController extends GetxController {
               .innerText; //need to be dd-mm-yyyy
 
           final DateTime gregorianDate = DateTime.parse(gregorianDateStr);
-          gregorianDateStr = _reverseDateFormat(gregorianDateStr);
+          gregorianDateStr = reverseDateFormat(gregorianDateStr);
           print(gregorianDateStr);
 
           final String dayName = DateFormat('EEEE').format(gregorianDate);
@@ -958,7 +996,9 @@ class MainController extends GetxController {
               dayName,
               gregorianDate_display,
               gregorianDate_display,
-              hijriDate);
+              hijriDate,
+              first_date,
+              last_date);
         }
         data_month_flag = true;
       } else {
@@ -1064,11 +1104,6 @@ class MainController extends GetxController {
             .showDisableBatteryOptimizationSettings();
       }
     } catch (e) {}
-  }
-
-  String _reverseDateFormat(String dateString) {
-    final parts = dateString.split('-');
-    return '${parts[2]}-${parts[1]}-${parts[0]}';
   }
 
   String _formatTime(String time) {
@@ -1257,5 +1292,10 @@ class MainController extends GetxController {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
     return '${twoDigits(duration.inHours)}:$twoDigitMinutes';
+  }
+
+  String reverseDateFormat(String dateString) {
+    final parts = dateString.split('-');
+    return '${parts[2]}-${parts[1]}-${parts[0]}';
   }
 }

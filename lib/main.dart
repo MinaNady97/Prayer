@@ -34,7 +34,6 @@ Future<void> main() async {
   //constants = controller.constants;
   controller.updateTime();
   final now_ = DateTime.now();
-
   final String formattedDate =
       '${controller.addLeadingZero(now_.day)}-${controller.addLeadingZero(now_.month)}-${controller.addLeadingZero(now_.year)}';
 
@@ -63,7 +62,7 @@ Future<void> main() async {
 
   // Call setupFirebaseMessaging to initialize Firebase Cloud Messaging
   controller.setupFirebaseMessaging();
-  await controller.fetchPrayerTimings();
+  await controller.fetchPrayerTimings(formattedDate);
   await controller.unread_notification();
 
   if (await controller.getTheme() == null) {

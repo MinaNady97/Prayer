@@ -14,8 +14,11 @@ import 'package:sametsalah/views/settingspage.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 final MainController controller = Get.put(MainController());
+DateTime currentDay = DateTime.now(); // Define focusedDay outside the widget
+DateTime focusedDay = currentDay;
 
 class MyApp extends StatefulWidget {
   @override
@@ -28,7 +31,6 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     final phone_h = MediaQuery.of(context);
-    print("fdassssssssssssssssssssssssssssssssssssssssssssss");
 
     print(phone_h.size.height);
     print(phone_h.size.width);
@@ -81,7 +83,6 @@ class _MyAppState extends State<MyApp> {
                       InkWell(
                         onTap: () {
                           Get.to(NotificationPage());
-                         
                         },
                         child: Icon(Icons.notifications_none,
                             size: 30,
@@ -131,14 +132,27 @@ class _MyAppState extends State<MyApp> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       SizedBox(height: 0.2 * phone_h.size.height),
+                      Visibility(
+                        visible: false, // Set to false to hide the widget
+                        child: Opacity(
+                          opacity:
+                              0.0, // Set opacity to make the widget transparent
+                          child: Text(
+                            "${controller.homepage_data_changed.value}",
+                            style: TextStyle(
+                                color: Colors
+                                    .transparent), // Set text color to transparent
+                          ),
+                        ),
+                      ),
                       Center(
                         child: SizedBox(
-                          width: phone_h.size.width * 0.2605,
-                          height: phone_h.size.height * 0.048,
+                          width: phone_h.size.width * 0.3,
+                          // height: phone_h.size.height * 0.048,
                           child: Center(
                             child: AutoSizeText(
                               controller.dayName,
-                              textScaleFactor: phone_h.size.width * 0.004271,
+                              textScaleFactor: phone_h.size.width * 0.004279,
                               style: const TextStyle(
                                 fontFamily: 'Arial',
                                 fontWeight: FontWeight.w500,
@@ -151,7 +165,7 @@ class _MyAppState extends State<MyApp> {
                       Center(
                         child: SizedBox(
                           width: phone_h.size.width * 0.65,
-                          height: phone_h.size.height * 0.048,
+                          // height: phone_h.size.height * 0.048,
                           child: Center(
                             child: AutoSizeText(
                               controller.hijriDate,
@@ -168,7 +182,7 @@ class _MyAppState extends State<MyApp> {
                       Center(
                         child: SizedBox(
                           width: phone_h.size.width * 0.65,
-                          height: phone_h.size.height * 0.048,
+                          // height: phone_h.size.height * 0.048,
                           child: Center(
                             child: AutoSizeText(
                               controller.gregorianDateDisplay,
@@ -185,12 +199,12 @@ class _MyAppState extends State<MyApp> {
                       Center(
                         child: SizedBox(
                           width: phone_h.size.width * 0.7793,
-                          height: phone_h.size.height * 0.0954,
+                          // height: phone_h.size.height * 0.0954,
                           child: Center(
                             child: AutoSizeText(
                               controller.prayertime_12format(
                                   controller.currentTime.value),
-                              textScaleFactor: phone_h.size.width * 0.0105,
+                              textScaleFactor: phone_h.size.width * 0.0095,
                               style: const TextStyle(
                                 fontFamily: 'Arial',
                                 fontWeight: FontWeight.w500,
@@ -203,7 +217,7 @@ class _MyAppState extends State<MyApp> {
                       Center(
                         child: SizedBox(
                           width: phone_h.size.width,
-                          height: phone_h.size.height * 0.048,
+                          // height: phone_h.size.height * 0.048,
                           child: Center(
                             child: AutoSizeText(
                               "سَمِعْنَا وَأَطَعْنَا ۖ غُفْرَانَكَ رَبَّنَا وَإِلَيْكَ الْمَصِيرُ",
@@ -220,7 +234,7 @@ class _MyAppState extends State<MyApp> {
                       Center(
                         child: SizedBox(
                           width: phone_h.size.width * 0.9,
-                          height: phone_h.size.height * 0.048,
+                          // height: phone_h.size.height * 0.048,
                           child: Center(
                             child: AutoSizeText(
                               "Islamic Center of Brushy Creek",
@@ -234,8 +248,40 @@ class _MyAppState extends State<MyApp> {
                           ),
                         ),
                       ),
+                      // SizedBox(
+                      //   height: 10,
+                      // ),
+
+                      AutoSizeTableCalendar(
+                        focusedDay: focusedDay,
+                        firstDay: DateTime.utc(
+                            int.parse(controller.first_date.split("-")[2]),
+                            int.parse(controller.first_date.split("-")[1]),
+                            int.parse(controller.first_date.split("-")[0])),
+                        lastDay: DateTime.utc(
+                            int.parse(controller.last_date.split("-")[2]),
+                            int.parse(controller.last_date.split("-")[1]),
+                            int.parse(controller.last_date.split("-")[0])),
+                        calendarFormat: CalendarFormat.week,
+                        headerVisible: true,
+                        onDaySelected: (selectedDay, previousDay) async {
+                          String formattedDate = selectedDay.toString();
+                          formattedDate = controller
+                              .reverseDateFormat(formattedDate.split(" ")[0]);
+                          await controller.fetchPrayerTimings(formattedDate);
+                          print('Selected day: $formattedDate');
+                          print('Selected day: $selectedDay');
+                          print('Previous selected day: $previousDay');
+                          // Update the focusedDay to the selectedDay
+                          setState(() {
+                            focusedDay = selectedDay;
+                          });
+                        },
+                      ),
+
                       Expanded(
                         child: ListView.builder(
+                          padding: EdgeInsets.all(0),
                           itemCount: controller.prayerTimes.length,
                           itemBuilder: (BuildContext context, int index) {
                             return prayertimecard(
@@ -330,6 +376,73 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
+class AutoSizeTableCalendar extends StatefulWidget {
+  final DateTime focusedDay;
+  final DateTime firstDay;
+  final DateTime lastDay;
+  final CalendarFormat calendarFormat;
+  final bool headerVisible;
+  final Function(CalendarFormat)? onFormatChanged;
+  final Function(DateTime, DateTime)? onDaySelected;
+
+  const AutoSizeTableCalendar({
+    Key? key,
+    required this.focusedDay,
+    required this.firstDay,
+    required this.lastDay,
+    required this.calendarFormat,
+    required this.headerVisible,
+    this.onFormatChanged,
+    this.onDaySelected,
+  }) : super(key: key);
+
+  @override
+  _AutoSizeTableCalendarState createState() => _AutoSizeTableCalendarState();
+}
+
+class _AutoSizeTableCalendarState extends State<AutoSizeTableCalendar> {
+  @override
+  Widget build(BuildContext context) {
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        textScaler: TextScaler.linear(1.2), // Adjust the scale factor as needed
+      ),
+      child: TableCalendar(
+        key: widget.key,
+        focusedDay: widget.focusedDay,
+        firstDay: widget.firstDay,
+        lastDay: widget.lastDay,
+        currentDay: currentDay,
+        selectedDayPredicate: (day) => isSameDay(day, widget.focusedDay),
+        calendarFormat: widget.calendarFormat,
+        headerVisible: widget.headerVisible,
+        rowHeight: 40.0,
+        daysOfWeekHeight: 20.0,
+        calendarStyle: const CalendarStyle(
+          todayDecoration: BoxDecoration(
+            color: Color.fromARGB(255, 158, 62, 86),
+            shape: BoxShape.circle,
+          ),
+          selectedDecoration: BoxDecoration(
+            color: Color.fromARGB(255, 64, 80, 112),
+            shape: BoxShape.circle,
+          ),
+        ),
+        daysOfWeekStyle: const DaysOfWeekStyle(
+            // No explicit font size specified
+            ),
+        headerStyle: const HeaderStyle(
+          formatButtonVisible: false,
+          formatButtonShowsNext: false,
+          titleCentered: true,
+          headerPadding: EdgeInsets.all(0),
+        ),
+        onDaySelected: widget.onDaySelected,
+      ),
+    );
+  }
+}
+
 class prayertimecard extends StatelessWidget {
   int index;
   prayertimecard({
@@ -341,14 +454,14 @@ class prayertimecard extends StatelessWidget {
   Widget build(BuildContext context) {
     final phone_h = MediaQuery.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      padding: const EdgeInsets.symmetric(vertical: 1.5),
       child: Card(
         color: controller.isDark.isTrue
             ? const Color.fromARGB(255, 57, 56, 56)
             : null, // Set color only when isDark is true
-        elevation: 3,
+        elevation: 5,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 7.0),
@@ -364,7 +477,7 @@ class prayertimecard extends StatelessWidget {
                   SizedBox(
                     width: 5,
                   ),
-                  if (index != 1 && controller.dayName != "Friday") ...[
+                  if (index != 1 && controller.selectedDayName != "Friday") ...[
                     SizedBox(
                       width: phone_h.size.width * 0.25,
                       height: phone_h.size.height * 0.035,
@@ -432,7 +545,7 @@ class prayertimecard extends StatelessWidget {
                         ],
                       ),
                     ),
-                  ] else if (controller.dayName != "Friday") ...[
+                  ] else if (controller.selectedDayName != "Friday") ...[
                     SizedBox(
                       width: phone_h.size.width * 0.47,
                       height: phone_h.size.height * 0.035,
@@ -477,7 +590,7 @@ class prayertimecard extends StatelessWidget {
                         ],
                       ),
                     ),
-                  ] else if (controller.dayName == "Friday") ...[
+                  ] else if (controller.selectedDayName == "Friday") ...[
                     SizedBox(
                       width: index != 1 && index != 2
                           ? phone_h.size.width * 0.25

@@ -11,7 +11,9 @@ class PrayerTimesStorage {
       String dayName,
       String gregorianDate,
       String gregorianDateDisplay,
-      String hijriDate) async {
+      String hijriDate,
+      String first_date,
+      String last_date) async {
     final prefs = await SharedPreferences.getInstance();
     final key = '$_keyPrefix${(date)}';
     await prefs.setStringList(key, [
@@ -22,6 +24,8 @@ class PrayerTimesStorage {
       gregorianDateDisplay,
       hijriDate,
       ...prayerTimes_Jumuah,
+      first_date,
+      last_date
     ]);
   }
 
