@@ -73,7 +73,7 @@ void onstart(ServiceInstance service) async {
   var nextday = 0;
   var is_silent = false;
   Timer.periodic(
-    const Duration(seconds: 10),
+    const Duration(seconds: 50),
     (timer) async {
       final now = DateTime.now();
       DateFormat dateFormat = DateFormat.EEEE();
@@ -573,8 +573,8 @@ class MainController extends GetxController {
           dayName = storedPrayerTimes[12];
           gregorianDate = storedPrayerTimes[13];
           gregorianDateDisplay = storedPrayerTimes[14];
-          hijriDate = storedPrayerTimes[15];          
-        } 
+          hijriDate = storedPrayerTimes[15];
+        }
         selectedDayName = storedPrayerTimes[12];
         // Now you have the prayer times and additional information for the current date
         // You can use this data as needed
@@ -618,9 +618,10 @@ class MainController extends GetxController {
   }
 
   Future<void> initializeService() async {
-    service = FlutterBackgroundService();
+    //service = FlutterBackgroundService();
     isRunning = await service.isRunning();
     service_is_runing.value = isRunning;
+    //print("service is $isRunning");
 
     /// OPTIONAL, using custom notification channel id
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
@@ -672,8 +673,8 @@ class MainController extends GetxController {
         isForegroundMode: true,
 
         notificationChannelId: 'ICBC',
-        initialNotificationTitle: 'ICBC SERVICE',
-        initialNotificationContent: 'Initializing',
+        initialNotificationTitle: 'ICBC',
+        initialNotificationContent: '',
         foregroundServiceNotificationId: 959,
       ),
       iosConfiguration: IosConfiguration(
@@ -689,156 +690,156 @@ class MainController extends GetxController {
     );
   }
 
-  List findClosestPrayerTime() {
-    final now = DateTime.now();
-    String closestKey = "Fajr";
-    int closestDiffInMinutes =
-        999999999999999999; // Initialize with maximum positive value
-    var index = 0;
+  // List findClosestPrayerTime() {
+  //   final now = DateTime.now();
+  //   String closestKey = "Fajr";
+  //   int closestDiffInMinutes =
+  //       999999999999999999; // Initialize with maximum positive value
+  //   var index = 0;
 
-    if (now.hour > int.parse(prayerTimes[4].split(":")[0]) ||
-        (now.hour == int.parse(prayerTimes[4].split(":")[0]) &&
-            now.minute >= int.parse(prayerTimes[4].split(":")[1]))) {
-      index = 1;
-    }
+  //   if (now.hour > int.parse(prayerTimes[4].split(":")[0]) ||
+  //       (now.hour == int.parse(prayerTimes[4].split(":")[0]) &&
+  //           now.minute >= int.parse(prayerTimes[4].split(":")[1]))) {
+  //     index = 1;
+  //   }
 
-    for (var x in prayerTimes) {
-      final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
-          .parse('${now.year}-${now.month}-${now.day + index} ${x}');
-      final timeDiffInMinutes = (prayerTime.difference(now).inMinutes);
+  //   for (var x in prayerTimes) {
+  //     final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
+  //         .parse('${now.year}-${now.month}-${now.day + index} ${x}');
+  //     final timeDiffInMinutes = (prayerTime.difference(now).inMinutes);
 
-      // Check if prayer time is in the future (positive difference)
-      if (timeDiffInMinutes >= 0 && timeDiffInMinutes < closestDiffInMinutes) {
-        closestKey = x;
-        closestDiffInMinutes = timeDiffInMinutes;
-      }
-    }
-    // Convert the closest time difference to hours and remaining minutes
-    final hours = closestDiffInMinutes ~/ 60;
-    final remainingMinutes = (closestDiffInMinutes % 60);
+  //     // Check if prayer time is in the future (positive difference)
+  //     if (timeDiffInMinutes >= 0 && timeDiffInMinutes < closestDiffInMinutes) {
+  //       closestKey = x;
+  //       closestDiffInMinutes = timeDiffInMinutes;
+  //     }
+  //   }
+  //   // Convert the closest time difference to hours and remaining minutes
+  //   final hours = closestDiffInMinutes ~/ 60;
+  //   final remainingMinutes = (closestDiffInMinutes % 60);
 
-    return [closestKey, hours, remainingMinutes];
-  }
+  //   return [closestKey, hours, remainingMinutes];
+  // }
 
-  List findClosestPrayerTime_abs() {
-    final now = DateTime.now();
-    String closestKey = "Fajr";
-    int closestDiffInMinutes =
-        999999999999999999; // Initialize with maximum positive value
+  // List findClosestPrayerTime_abs() {
+  //   final now = DateTime.now();
+  //   String closestKey = "Fajr";
+  //   int closestDiffInMinutes =
+  //       999999999999999999; // Initialize with maximum positive value
 
-    for (var x in prayerTimes) {
-      final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
-          .parse('${now.year}-${now.month}-${now.day} ${x}');
-      final timeDiffInMinutes = (now.difference(prayerTime).inMinutes);
+  //   for (var x in prayerTimes) {
+  //     final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
+  //         .parse('${now.year}-${now.month}-${now.day} ${x}');
+  //     final timeDiffInMinutes = (now.difference(prayerTime).inMinutes);
 
-      // Check if prayer time is in the future (positive difference)
-      if (timeDiffInMinutes >= 0 && timeDiffInMinutes < closestDiffInMinutes) {
-        closestKey = x;
-        closestDiffInMinutes = timeDiffInMinutes;
-      }
-    }
-    // Convert the closest time difference to hours and remaining minutes
-    final hours = closestDiffInMinutes ~/ 60;
-    final remainingMinutes = closestDiffInMinutes % 60;
+  //     // Check if prayer time is in the future (positive difference)
+  //     if (timeDiffInMinutes >= 0 && timeDiffInMinutes < closestDiffInMinutes) {
+  //       closestKey = x;
+  //       closestDiffInMinutes = timeDiffInMinutes;
+  //     }
+  //   }
+  //   // Convert the closest time difference to hours and remaining minutes
+  //   final hours = closestDiffInMinutes ~/ 60;
+  //   final remainingMinutes = closestDiffInMinutes % 60;
 
-    return [closestKey, hours, remainingMinutes];
-  }
+  //   return [closestKey, hours, remainingMinutes];
+  // }
 
-  List find_intrval_bet_now__and_PrayerTime(int index) {
-    final now = DateTime.now();
-    var sign;
-    print(index);
-    final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
-        .parse('${now.year}-${now.month}-${now.day} ${prayerTimes[index]}');
-    final timeDiffInMinutes = (now.difference(prayerTime).inMinutes);
-    if (timeDiffInMinutes < 0) {
-      sign = "-";
-    } else {
-      sign = "+";
-    }
+  // List find_intrval_bet_now__and_PrayerTime(int index) {
+  //   final now = DateTime.now();
+  //   var sign;
+  //   print(index);
+  //   final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
+  //       .parse('${now.year}-${now.month}-${now.day} ${prayerTimes[index]}');
+  //   final timeDiffInMinutes = (now.difference(prayerTime).inMinutes);
+  //   if (timeDiffInMinutes < 0) {
+  //     sign = "-";
+  //   } else {
+  //     sign = "+";
+  //   }
 
-    final hours = timeDiffInMinutes ~/ 60;
-    final remainingMinutes = timeDiffInMinutes % 60;
+  //   final hours = timeDiffInMinutes ~/ 60;
+  //   final remainingMinutes = timeDiffInMinutes % 60;
 
-    return [hours, remainingMinutes, sign];
-  }
+  //   return [hours, remainingMinutes, sign];
+  // }
 
-  String find_intrval_bet_now__and_iqamaTime(int index) {
-    final now = DateTime.now();
-    var sign;
-    int _count = 0;
-    print(index);
-    if (now.hour > int.parse(prayerTimes[4].split(":")[0]) ||
-        (now.hour == int.parse(prayerTimes[4].split(":")[0]) &&
-            now.minute >= int.parse(prayerTimes[4].split(":")[1]))) {
-      _count = 1;
-    }
-    final prayerTime = DateFormat('yyyy-MM-dd HH:mm').parse(
-        '${now.year}-${now.month}-${now.day + _count} ${prayerTimes_iqama[index]}');
-    final timeDiffInMinutes = (prayerTime.difference(now).inMinutes);
-    if (timeDiffInMinutes < 0) {
-      sign = "-";
-    } else {
-      sign = "+";
-    }
+  // String find_intrval_bet_now__and_iqamaTime(int index) {
+  //   final now = DateTime.now();
+  //   var sign;
+  //   int _count = 0;
+  //   print(index);
+  //   if (now.hour > int.parse(prayerTimes[4].split(":")[0]) ||
+  //       (now.hour == int.parse(prayerTimes[4].split(":")[0]) &&
+  //           now.minute >= int.parse(prayerTimes[4].split(":")[1]))) {
+  //     _count = 1;
+  //   }
+  //   final prayerTime = DateFormat('yyyy-MM-dd HH:mm').parse(
+  //       '${now.year}-${now.month}-${now.day + _count} ${prayerTimes_iqama[index]}');
+  //   final timeDiffInMinutes = (prayerTime.difference(now).inMinutes);
+  //   if (timeDiffInMinutes < 0) {
+  //     sign = "-";
+  //   } else {
+  //     sign = "+";
+  //   }
 
-    final hours = timeDiffInMinutes ~/ 60;
-    final remainingMinutes = timeDiffInMinutes % 60;
+  //   final hours = timeDiffInMinutes ~/ 60;
+  //   final remainingMinutes = timeDiffInMinutes % 60;
 
-    return "$hours h:$remainingMinutes m";
-  }
+  //   return "$hours h:$remainingMinutes m";
+  // }
 
-  List findClosestiqamaTime() {
-    final now = DateTime.now();
-    String closestKey = "Fajr";
-    int closestDiffInMinutes =
-        999999999999999999; // Initialize with maximum positive value
-    var index = 0;
+  // List findClosestiqamaTime() {
+  //   final now = DateTime.now();
+  //   String closestKey = "Fajr";
+  //   int closestDiffInMinutes =
+  //       999999999999999999; // Initialize with maximum positive value
+  //   var index = 0;
 
-    if (now.hour > int.parse(prayerTimes_iqama[4].split(":")[0]) ||
-        (now.hour == int.parse(prayerTimes_iqama[4].split(":")[0]) &&
-            now.minute >= int.parse(prayerTimes_iqama[4].split(":")[1]))) {
-      index = 1;
-    }
+  //   if (now.hour > int.parse(prayerTimes_iqama[4].split(":")[0]) ||
+  //       (now.hour == int.parse(prayerTimes_iqama[4].split(":")[0]) &&
+  //           now.minute >= int.parse(prayerTimes_iqama[4].split(":")[1]))) {
+  //     index = 1;
+  //   }
 
-    for (var x in prayerTimes_iqama) {
-      final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
-          .parse('${now.year}-${now.month}-${now.day + index} ${x}');
-      final timeDiffInMinutes = (prayerTime.difference(now).inMinutes);
+  //   for (var x in prayerTimes_iqama) {
+  //     final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
+  //         .parse('${now.year}-${now.month}-${now.day + index} ${x}');
+  //     final timeDiffInMinutes = (prayerTime.difference(now).inMinutes);
 
-      // Check if prayer time is in the future (positive difference)
-      if (timeDiffInMinutes >= 0 && timeDiffInMinutes < closestDiffInMinutes) {
-        closestKey = x;
-        closestDiffInMinutes = timeDiffInMinutes;
-      }
-    }
-    // Convert the closest time difference to hours and remaining minutes
-    final hours = closestDiffInMinutes ~/ 60;
-    final remainingMinutes = (closestDiffInMinutes % 60);
+  //     // Check if prayer time is in the future (positive difference)
+  //     if (timeDiffInMinutes >= 0 && timeDiffInMinutes < closestDiffInMinutes) {
+  //       closestKey = x;
+  //       closestDiffInMinutes = timeDiffInMinutes;
+  //     }
+  //   }
+  //   // Convert the closest time difference to hours and remaining minutes
+  //   final hours = closestDiffInMinutes ~/ 60;
+  //   final remainingMinutes = (closestDiffInMinutes % 60);
 
-    return [closestKey, hours, remainingMinutes];
-  }
+  //   return [closestKey, hours, remainingMinutes];
+  // }
 
-  List find_intrval_bet_iqama__and_PrayerTime(int index) {
-    final now = DateTime.now();
-    var sign;
-    final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
-        .parse('${now.year}-${now.month}-${now.day} ${prayerTimes[index]}');
-    final iqamaTime = DateFormat('yyyy-MM-dd HH:mm').parse(
-        '${now.year}-${now.month}-${now.day} ${prayerTimes_iqama[index]}');
-    final timeDiffInMinutes = (iqamaTime.difference(prayerTime).inMinutes);
+  // List find_intrval_bet_iqama__and_PrayerTime(int index) {
+  //   final now = DateTime.now();
+  //   var sign;
+  //   final prayerTime = DateFormat('yyyy-MM-dd HH:mm')
+  //       .parse('${now.year}-${now.month}-${now.day} ${prayerTimes[index]}');
+  //   final iqamaTime = DateFormat('yyyy-MM-dd HH:mm').parse(
+  //       '${now.year}-${now.month}-${now.day} ${prayerTimes_iqama[index]}');
+  //   final timeDiffInMinutes = (iqamaTime.difference(prayerTime).inMinutes);
 
-    if (timeDiffInMinutes < 0) {
-      sign = "-";
-    } else {
-      sign = "+";
-    }
+  //   if (timeDiffInMinutes < 0) {
+  //     sign = "-";
+  //   } else {
+  //     sign = "+";
+  //   }
 
-    final hours = timeDiffInMinutes ~/ 60;
-    final remainingMinutes = timeDiffInMinutes % 60;
+  //   final hours = timeDiffInMinutes ~/ 60;
+  //   final remainingMinutes = timeDiffInMinutes % 60;
 
-    return [hours, remainingMinutes, sign];
-  }
+  //   return [hours, remainingMinutes, sign];
+  // }
 
   // Function to handle notification click event
   void handleNotificationClick() {

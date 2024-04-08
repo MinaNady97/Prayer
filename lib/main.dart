@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:get/get.dart';
 import 'package:sametsalah/controllers/home_controller.dart';
 import 'package:sametsalah/controllers/PrayerTimesStorage.dart';
@@ -11,7 +12,7 @@ import 'package:sametsalah/other/firebase_options.dart';
 import 'package:sametsalah/views/homepage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-late var service;
+var service = FlutterBackgroundService();
 final MainController controller = Get.put(MainController());
 //List<QueryDocumentSnapshot> constants = [];
 SharedPreferences? instance;
@@ -30,7 +31,7 @@ Future<void> main() async {
     // You might want to handle this error gracefully, depending on your use case
     return;
   }
-  await controller.initializeService();
+
   //constants = controller.constants;
   controller.updateTime();
   final now_ = DateTime.now();
@@ -77,7 +78,6 @@ Future<void> main() async {
     controller.theme_color = "red".obs;
     controller.isRed = true.obs;
   } else {
-    print("dfdczzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzx");
     controller.isRed = RxBool(await controller.getThemeColor());
     controller.theme_color.value = controller.isRed.isTrue ? "red" : "blue";
     controller.selectedSky = controller.isRed.isTrue ? Sky.red : Sky.blue;
@@ -94,6 +94,10 @@ Future<void> main() async {
   } else {
     controller.isNotification = RxBool(await controller.getNotificationVlaue());
   }
+  //var c = await service.isRunning();
+  controller.isRunning = await service.isRunning();
+  controller.service_is_runing.value = controller.isRunning;
+  print("service is ${controller.isRunning}");
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(MyApp());
   await requestPermissionNotification();

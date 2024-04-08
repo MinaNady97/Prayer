@@ -57,6 +57,7 @@ class _SettingsPage extends State<SettingsPage> {
                             controller.turnNotification(false);
                             print("hereeeeeeeeeeeeeeeeeeeeee");
                           } else {
+                            await controller.initializeService();
                             await service.startService();
                             controller.change_service_statu(true);
                             controller.turnNotification(true);
