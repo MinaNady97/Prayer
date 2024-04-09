@@ -104,4 +104,5 @@ Future<void> main() async {
   await controller.requestLocationPermission();
   await controller.stop_battary_obtimized();
   await controller.requestnotifyPermission();
+  await controller.initializeService();
 }
