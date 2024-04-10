@@ -1031,6 +1031,29 @@ class MainController extends GetxController {
     }
   }
 
+  String getPrayerName_Friday(int index) {
+    switch (index) {
+      case 0:
+        return 'Fajr';
+      case 1:
+        return 'Sunrise';
+      case 2:
+        return "1st Jumu'ah";
+      case 3:
+        return "2nd Jumu'ah";
+      case 4:
+        return "3rd Jumu'ah";
+      case 5:
+        return 'Asr';
+      case 6:
+        return 'Maghrib';
+      case 7:
+        return 'Isha';
+      default:
+        return '';
+    }
+  }
+
   String getPrayerName_jumaha(int index) {
     switch (index) {
       case 0:
@@ -1137,11 +1160,31 @@ class MainController extends GetxController {
     int hour = time_hour_minute[0];
     int minute = time_hour_minute[1];
 
-    return hour <= 12 && hour != 0
+    return hour < 12 && hour != 0
         ? "$time AM"
-        : hour == 0
-            ? "${'${hour + 12}'}:${(minute < 10) ? '0$minute' : '$minute'} AM"
-            : "${hour - 12 < 10 ? '0${hour - 12}' : hour - 12}:${(minute < 10) ? '0$minute' : '$minute'} PM";
+        : hour == 12
+            ? "${hour}:${(minute < 10) ? '0$minute' : '$minute'} PM"
+            : hour == 0
+                ? "${'${hour + 12}'}:${(minute < 10) ? '0$minute' : '$minute'} AM"
+                : "${hour - 12 < 10 ? '0${hour - 12}' : hour - 12}:${(minute < 10) ? '0$minute' : '$minute'} PM";
+  }
+
+  String add_30minute(String time) {
+    print(time);
+    List time_hour_minute = _splitHourMinute(time);
+    int hour = time_hour_minute[0];
+    int minute = time_hour_minute[1] + 30;
+    if (minute > 59) {
+      hour++;
+      minute -= 60;
+    }
+    return hour < 12 && hour != 0
+        ? "${hour}:${(minute < 10) ? '0$minute' : '$minute'} AM"
+        : hour == 12
+            ? "${hour}:${(minute < 10) ? '0$minute' : '$minute'} PM"
+            : hour == 0
+                ? "${'${hour + 12}'}:${(minute < 10) ? '0$minute' : '$minute'} AM"
+                : "${hour - 12 < 10 ? '0${hour - 12}' : hour - 12}:${(minute < 10) ? '0$minute' : '$minute'} PM";
   }
 
   List<Map<String, dynamic>> createPrayerInfoList(

@@ -281,8 +281,10 @@ class _MyAppState extends State<MyApp> {
 
                       Expanded(
                         child: ListView.builder(
-                          padding: EdgeInsets.all(0),
-                          itemCount: controller.prayerTimes.length,
+                          padding: const EdgeInsets.all(0),
+                          itemCount: controller.selectedDayName != "Friday"
+                              ? controller.prayerTimes.length
+                              : controller.prayerTimes.length + 2,
                           itemBuilder: (BuildContext context, int index) {
                             return prayertimecard(
                               index: index,
@@ -453,6 +455,12 @@ class prayertimecard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final phone_h = MediaQuery.of(context);
+    int image_index = (index == 2 || index == 3 || index == 4)
+        ? 2
+        : (index > 4)
+            ? index - 2
+            : index;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1.5),
       child: Card(
@@ -469,15 +477,15 @@ class prayertimecard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Image.asset(
-                    'images/PrayerTime${index.toString()}.png', // Replace 'prayer_icon.png' with your icon asset path
-                    width: 25, // Adjust width as needed
-                    height: 25, // Adjust height as needed
-                  ),
-                  SizedBox(
-                    width: 5,
-                  ),
                   if (index != 1 && controller.selectedDayName != "Friday") ...[
+                    Image.asset(
+                      'images/PrayerTime${index.toString()}.png', // Replace 'prayer_icon.png' with your icon asset path
+                      width: 25, // Adjust width as needed
+                      height: 25, // Adjust height as needed
+                    ),
+                    SizedBox(
+                      width: 5,
+                    ),
                     SizedBox(
                       width: phone_h.size.width * 0.25,
                       height: phone_h.size.height * 0.035,
@@ -546,6 +554,14 @@ class prayertimecard extends StatelessWidget {
                       ),
                     ),
                   ] else if (controller.selectedDayName != "Friday") ...[
+                    Image.asset(
+                      'images/PrayerTime${index.toString()}.png', // Replace 'prayer_icon.png' with your icon asset path
+                      width: 25, // Adjust width as needed
+                      height: 25, // Adjust height as needed
+                    ),
+                    SizedBox(
+                      width: 5,
+                    ),
                     SizedBox(
                       width: phone_h.size.width * 0.47,
                       height: phone_h.size.height * 0.035,
@@ -591,21 +607,31 @@ class prayertimecard extends StatelessWidget {
                       ),
                     ),
                   ] else if (controller.selectedDayName == "Friday") ...[
+                    Image.asset(
+                      'images/PrayerTime${image_index.toString()}.png', // Replace 'prayer_icon.png' with your icon asset path
+                      width: 25, // Adjust width as needed
+                      height: 25, // Adjust height as needed
+                    ),
                     SizedBox(
-                      width: index != 1 && index != 2
-                          ? phone_h.size.width * 0.25
-                          : index == 1
-                              ? phone_h.size.width * 0.47
-                              : phone_h.size.width * 0.22,
+                      width: 5,
+                    ),
+                    SizedBox(
+                      width:
+                          index != 1 && index != 2 && index != 3 && index != 4
+                              ? phone_h.size.width * 0.25
+                              : index == 1
+                                  ? phone_h.size.width * 0.47
+                                  : phone_h.size.width * 0.28,
                       height: phone_h.size.height * 0.035,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           AutoSizeText(
-                            index == 2
-                                ? "Jumu'ah"
-                                : controller.getPrayerName(index),
-                            textScaleFactor: phone_h.size.width * 0.003125,
+                            controller.getPrayerName_Friday(index),
+                            textScaleFactor:
+                                index != 2 && index != 3 && index != 4
+                                    ? phone_h.size.width * 0.003125
+                                    : phone_h.size.width * 0.0018,
                             style: const TextStyle(
                               fontFamily: 'Arial',
                               fontSize: 25,
@@ -616,7 +642,7 @@ class prayertimecard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (index != 1 && index != 2) ...[
+                    if (index == 0) ...[
                       Image.asset(
                         'images/Azan.png', // Replace 'prayer_icon.png' with your icon asset path
                         width: 35, // Adjust width as needed
@@ -691,25 +717,98 @@ class prayertimecard extends StatelessWidget {
                           ],
                         ),
                       ),
-                    ] else if (index == 2) ...[
+                    ] else if (index == 2 || index == 3 || index == 4) ...[
                       Image.asset(
-                        'images/IQAMAH.png', // Replace 'prayer_icon.png' with your icon asset path
-                        width: 35, // Adjust width as needed
+                        'images/KHUTBAH.png', // Replace 'prayer_icon.png' with your icon asset path
+                        width: 40, // Adjust width as needed
                         height: 35, // Adjust height as needed
                       ),
                       SizedBox(
-                        width: phone_h.size.width * 0.12,
+                        width: phone_h.size.width * 0.18,
                         height: phone_h.size.height * 0.037,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             AutoSizeText(
                               controller.prayertime_12format(
-                                  controller.prayerTimes_Jumuah[0]),
-                              textScaleFactor: phone_h.size.width * 0.0018,
+                                  controller.prayerTimes_Jumuah[index - 2]),
+                              textScaleFactor: phone_h.size.width * 0.0028,
                               style: const TextStyle(
                                 fontFamily: 'Arial',
                                 fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Image.asset(
+                        'images/SALAH.png', // Replace 'prayer_icon.png' with your icon asset path
+                        width: 40, // Adjust width as needed
+                        height: 35, // Adjust height as needed
+                      ),
+                      SizedBox(
+                        width: phone_h.size.width * 0.18,
+                        height: phone_h.size.height * 0.037,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            AutoSizeText(
+                              controller.add_30minute(
+                                  controller.prayerTimes_Jumuah[index - 2]),
+                              textScaleFactor: phone_h.size.width * 0.0028,
+                              style: const TextStyle(
+                                fontFamily: 'Arial',
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Image.asset(
+                      //   'images/IQAMAH.png', // Replace 'prayer_icon.png' with your icon asset path
+                      //   width: 35, // Adjust width as needed
+                      //   height: 35, // Adjust height as needed
+                      // ),
+                      // SizedBox(
+                      //   width: phone_h.size.width * 0.13,
+                      //   height: phone_h.size.height * 0.037,
+                      //   child: Row(
+                      //     mainAxisAlignment: MainAxisAlignment.start,
+                      //     children: [
+                      //       AutoSizeText(
+                      //         controller.prayertime_12format(
+                      //             controller.prayerTimes_Jumuah[2]),
+                      //         textScaleFactor: phone_h.size.width * 0.0018,
+                      //         style: const TextStyle(
+                      //           fontFamily: 'Arial',
+                      //           fontWeight: FontWeight.bold,
+                      //         ),
+                      //         maxLines: 1,
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
+                    ] else if (index > 4) ...[
+                      Image.asset(
+                        'images/Azan.png', // Replace 'prayer_icon.png' with your icon asset path
+                        width: 35, // Adjust width as needed
+                        height: 35, // Adjust height as needed
+                      ),
+                      SizedBox(
+                        width: phone_h.size.width * 0.23,
+                        height: phone_h.size.height * 0.037,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            AutoSizeText(
+                              controller.prayertime_12format(
+                                  controller.prayerTimes[index - 2]),
+                              textScaleFactor: phone_h.size.width * 0.003125,
+                              style: const TextStyle(
+                                fontFamily: 'Arial',
+                                fontWeight: FontWeight.w500,
                               ),
                               maxLines: 1,
                             ),
@@ -722,42 +821,18 @@ class prayertimecard extends StatelessWidget {
                         height: 35, // Adjust height as needed
                       ),
                       SizedBox(
-                        width: phone_h.size.width * 0.12,
+                        width: phone_h.size.width * 0.2,
                         height: phone_h.size.height * 0.037,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             AutoSizeText(
                               controller.prayertime_12format(
-                                  controller.prayerTimes_Jumuah[1]),
-                              textScaleFactor: phone_h.size.width * 0.0018,
+                                  controller.prayerTimes_iqama[index - 2]),
+                              textScaleFactor: phone_h.size.width * 0.003125,
                               style: const TextStyle(
                                 fontFamily: 'Arial',
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                            ),
-                          ],
-                        ),
-                      ),
-                      Image.asset(
-                        'images/IQAMAH.png', // Replace 'prayer_icon.png' with your icon asset path
-                        width: 35, // Adjust width as needed
-                        height: 35, // Adjust height as needed
-                      ),
-                      SizedBox(
-                        width: phone_h.size.width * 0.13,
-                        height: phone_h.size.height * 0.037,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            AutoSizeText(
-                              controller.prayertime_12format(
-                                  controller.prayerTimes_Jumuah[2]),
-                              textScaleFactor: phone_h.size.width * 0.0018,
-                              style: const TextStyle(
-                                fontFamily: 'Arial',
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w500,
                               ),
                               maxLines: 1,
                             ),
