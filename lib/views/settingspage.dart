@@ -52,7 +52,6 @@ class _SettingsPage extends State<SettingsPage> {
                             controller.change_service_statu(false);
                             service.invoke("turnoffNotification");
                             service.invoke("stopService");
-                            await controller.enable_sound();
                             controller.flag = true;
                             controller.turnNotification(false);
                             print("hereeeeeeeeeeeeeeeeeeeeee");
@@ -78,6 +77,8 @@ class _SettingsPage extends State<SettingsPage> {
                   trailing: Obx(() => Switch(
                         value: controller.isNotification.value,
                         onChanged: (bool value) async {
+                          print("hereeeeeeeeeeeeeeeeeeeeeeee");
+
                           controller.isRunning = await service.isRunning();
                           if (controller.isRunning) {
                             controller.turnNotification(value);

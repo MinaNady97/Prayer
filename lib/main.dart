@@ -88,14 +88,16 @@ Future<void> main() async {
         ? Color.fromARGB(255, 127, 41, 53)
         : Color.fromARGB(255, 1, 50, 90);
   }
-  if (instance!.getBool("isNotification") == null) {
-    instance!.setBool("isNotification", true);
-    controller.isNotification.value = true;
+  controller.isRunning = await service.isRunning();
+  if (instance!.getBool("isNotification") == null ||
+      controller.isRunning == false) {
+    instance!.setBool("isNotification", false);
+    controller.isNotification.value = false;
   } else {
     controller.isNotification = RxBool(await controller.getNotificationVlaue());
   }
   //var c = await service.isRunning();
-  controller.isRunning = await service.isRunning();
+
   controller.service_is_runing.value = controller.isRunning;
   print("service is ${controller.isRunning}");
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);

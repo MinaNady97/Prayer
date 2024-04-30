@@ -44,9 +44,9 @@ String addLeadingZero(int value) {
 @pragma('vm:entry-point')
 void onstart(ServiceInstance service) async {
   DartPluginRegistrant.ensureInitialized();
-  final MainController control = Get.put(MainController());
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  final MainController control = await Get.put(MainController());
+  //final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+  FlutterLocalNotificationsPlugin();
   instance = await SharedPreferences.getInstance();
   var isNotification = true;
 
@@ -54,8 +54,10 @@ void onstart(ServiceInstance service) async {
   isNotification = control.isNotification.value;
 
   service.on('stopService').listen((event) async {
+    if (control.flag == false) {
+      control.enable_sound();
+    }
     await service.stopSelf();
-    control.enable_sound();
   });
   service.on('turnonNotification').listen((event) async {
     isNotification = true;
@@ -68,210 +70,43 @@ void onstart(ServiceInstance service) async {
     instance!.setBool("isNotification", false);
   });
 
-  late List<Map<String, dynamic>> closetPrayerInfoList;
-  var silent_timer = 15;
-  var nextday = 0;
-  var is_silent = false;
-  Timer.periodic(
-    const Duration(seconds: 50),
-    (timer) async {
-      final now = DateTime.now();
-      DateFormat dateFormat = DateFormat.EEEE();
-      var today = dateFormat.format(now);
+  DateTime now = DateTime.now();
+  DateFormat dateFormat = DateFormat.EEEE();
+  var today = dateFormat.format(now);
 
-      print("today is :" + today);
-      print(control.dayName);
-      if (control.dayName != today) {
-        print("new time fetched");
-        final now = DateTime.now();
-        final String formattedDate =
-            '${addLeadingZero(now.day)}-${addLeadingZero(now.month)}-${addLeadingZero(now.year)}';
-        await control.fetchPrayerTimings(formattedDate);
-      }
-      if (today == "Friday") {
-        var prayerTimes = [...control.prayerTimes];
-        prayerTimes.removeAt(2);
-        prayerTimes.insertAll(2, control.prayerTimes_Jumuah);
-        var prayerTimes_iqama = [...control.prayerTimes_iqama];
-        prayerTimes_iqama.removeAt(2);
-        prayerTimes_iqama.insertAll(2, control.prayerTimes_Jumuah);
-        print(prayerTimes);
-        closetPrayerInfoList = control.createPrayerInfoList(
-            prayerTimes, prayerTimes_iqama, control.getPrayerName_jumaha, 0);
-      } else {
-        closetPrayerInfoList = control.createPrayerInfoList(control.prayerTimes,
-            control.prayerTimes_iqama, control.getPrayerName, 0);
-      }
+  await control.background_service(today);
 
-      var ClosestPrayer = control.findClosestPrayerKey(closetPrayerInfoList);
-      var ClosetKey = ClosestPrayer['key'];
+  await control.background_notification(service, today, now);
+  // Calculate the delay until the next minute starts
+  int secondsUntilNextMinute = 60 - now.second;
+  int millisecondsUntilNextMinute = 1000 - now.millisecond;
 
-      var time_difference_list =
-          control.getTimeDifference(closetPrayerInfoList, ClosetKey);
-
-      //var iqama_time = ClosestPrayer['iqamaTime'];
-
-      if (['Jumuah Fisrt Iqama', 'Jumuah Second Iqama', 'Jumuah Third Iqama']
-          .contains(ClosetKey)) {
-        silent_timer = 45;
-      } else {
-        silent_timer = 15;
-      }
-      print(time_difference_list);
-      print(ClosetKey);
-      print(silent_timer);
-      print(control.flag);
-      if (time_difference_list['iqamaTimeDifferenceInMinutes'] >= 0 &&
-          time_difference_list['iqamaTimeDifferenceInMinutes'] <=
-              silent_timer &&
-          ClosetKey != 'Sunrise' &&
-          control.flag) {
-        print("checking");
-        is_silent = await control.checkLocation();
-        if (is_silent) {
-          control.flag = false;
-        }
-      } else if (time_difference_list['iqamaTimeDifferenceInMinutes'] >
-              silent_timer &&
-          control.flag == false) {
-        control.enable_sound();
-        control.flag = true;
-      }
-
-      if (service is AndroidServiceInstance) {
-        if (await service.isForegroundService() && isNotification == true) {
-          var min_distance = await control.getmindistance();
-          if (now.hour > int.parse(control.prayerTimes[5].split(":")[0]) ||
-              (now.hour == int.parse(control.prayerTimes[5].split(":")[0]) &&
-                  now.minute >=
-                      int.parse(control.prayerTimes[5].split(":")[1]))) {
-            nextday = 1;
-          } else {
-            nextday = 0;
-          }
-          var nextPrayerInfoList;
-          if (today == "Friday") {
-            var prayerTimes = [...control.prayerTimes];
-            prayerTimes.removeAt(2);
-            prayerTimes.insertAll(2, control.prayerTimes_Jumuah);
-            var prayerTimes_iqama = [...control.prayerTimes_iqama];
-            prayerTimes_iqama.removeAt(2);
-            prayerTimes_iqama.insertAll(2, control.prayerTimes_Jumuah);
-
-            nextPrayerInfoList = control.createPrayerInfoList(prayerTimes,
-                prayerTimes_iqama, control.getPrayerName_jumaha, nextday);
-          } else {
-            nextPrayerInfoList = control.createPrayerInfoList(
-                control.prayerTimes,
-                control.prayerTimes_iqama,
-                control.getPrayerName,
-                nextday);
-          }
-
-          nextPrayerInfoList.forEach((prayerInfo) {
-            print('Prayer: ${prayerInfo['key']}, '
-                'Prayer Time: ${prayerInfo['prayerTime']}, '
-                'Iqama Time: ${prayerInfo['iqamaTime']}, '
-                'Time Difference: ${prayerInfo['timeDifference']} minutes');
-          });
-          var NextPrayer = control.findNextPrayerKey(nextPrayerInfoList);
-
-          String _content = "";
-          try {
-            var status;
-
-            if (control.flag) {
-              status = "normal";
-            } else {
-              status = "silent";
-            }
-            print("next prayer ${NextPrayer}");
-            var next_prayer_key = NextPrayer!["key"];
-            var time_differences = control.getTimeDifference_notification(
-                nextPrayerInfoList, next_prayer_key);
-            var fixed_string =
-                "${next_prayer_key} remains: ${time_differences['prayerTimeDifference']}\nyor distance from ICBC ${min_distance}m\nthe phone now is $status  ";
-            if (time_difference_list['prayerTimeDifferenceInMinutes'] >= 0 &&
-                time_difference_list['iqamaTimeDifferenceInMinutes'] <= 0) {
-              _content =
-                  "${fixed_string} \nthe $ClosetKey aqama after ${time_difference_list['iqamaTimeDifferenceInMinutes'].abs()}m\nand your phone will be silent \nif you within 100m";
-            } else if (time_difference_list['prayerTimeDifferenceInMinutes'] >=
-                    0 &&
-                time_difference_list['iqamaTimeDifferenceInMinutes'] >= 0 &&
-                time_difference_list['iqamaTimeDifferenceInMinutes'] <
-                    silent_timer) {
-              if (status == "silent") {
-                _content =
-                    "${fixed_string}\nyour phone will be normal when $ClosetKey pray finishes after ${silent_timer - time_difference_list['iqamaTimeDifferenceInMinutes']}m";
-              } else {
-                _content =
-                    "${fixed_string}\n$ClosetKey pray finishes after ${silent_timer - time_difference_list['iqamaTimeDifferenceInMinutes']}m ";
-              }
-            } else {
-              _content = fixed_string +
-                  "and will be silent after ${time_differences['iqamaTimeDifference']}\nif you within 100m";
-            }
-          } catch (e) {
-            print("here $e");
-          }
-          print(_content);
-          flutterLocalNotificationsPlugin.show(
-            959,
-            'ICBC',
-            _content,
-            const NotificationDetails(
-              android: AndroidNotificationDetails(
-                'ICBC',
-                'ICBC SERVICE',
-                icon: 'yh',
-                ongoing: true,
-                importance: Importance.high,
-              ),
-            ),
-            payload: _content,
-          );
-        }
-
-        // if (await service.isForegroundService() && isNotification == true) {
-        //   List closest_prayer_time = control.findClosestPrayerTime();
-        //   String _content = "";
-        //   try {
-        //     var index = control.prayerTimes.indexOf(closest_prayer_time[0]);
-        //     if (key != null &&
-        //         time_interval < time_of_aqama_of_current_prayer &&
-        //         sign == "+") {
-        //       _content =
-        //           "${control.getPrayerName(index)} remains: ${closest_prayer_time[1]}h : ${closest_prayer_time[2]}m\n the $key aqama after ${time_of_aqama_of_current_prayer - time_interval}m";
-        //     } else {
-        //       _content =
-        //           "${control.getPrayerName(index)} remains: ${closest_prayer_time[1]}h : ${closest_prayer_time[2]}m";
-        //     }
-        //   } catch (e) {
-        //     print("here");
-        //   }
-        //   flutterLocalNotificationsPlugin.show(
-        //     959,
-        //     'ICBC',
-        //     _content,
-        //     const NotificationDetails(
-        //       android: AndroidNotificationDetails(
-        //         'ICBC',
-        //         'ICBC SERVICE',
-        //         icon: 'yh',
-        //         ongoing: true,
-        //       ),
-        //     ),
-        //   );
-        // }
-      }
-    },
+  // Set the delay to the next minute
+  Duration delay = Duration(
+    seconds: secondsUntilNextMinute,
+    milliseconds: millisecondsUntilNextMinute,
   );
+
+  Timer(delay, () {
+    Timer.periodic(
+      const Duration(minutes: 1),
+      (timer) async {
+        final now = DateTime.now();
+        DateFormat dateFormat = DateFormat.EEEE();
+        var today = dateFormat.format(now);
+
+        await control.background_service(today);
+
+        await control.background_notification(service, today, now);
+      },
+    );
+  });
 }
 
 class MainController extends GetxController {
   RxBool isDark = true.obs;
   RxBool isRed = true.obs;
-  RxBool isNotification = true.obs;
+  RxBool isNotification = false.obs;
   RxBool service_is_runing = false.obs;
   RxBool homepage_data_changed = true.obs;
   List<QueryDocumentSnapshot> coordinates = [];
@@ -297,8 +132,13 @@ class MainController extends GetxController {
   String theme_value = "dark";
   bool flag_test = false;
   var currentTime = "".obs;
+  late var time_difference_list;
+  late var ClosetKey;
+  var is_silent = false;
+  var silent_timer = 15;
   //List<String> jumuah_times = ["12:00", "13:15", "14:30"];
-
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
   var primary_dark_color = Color.fromARGB(255, 127, 41, 53).obs;
   var primary_light_color = Color.fromARGB(255, 127, 41, 53).obs;
   int? notification_count;
@@ -315,6 +155,284 @@ class MainController extends GetxController {
       theme_value = "light";
       instance!.setBool("isDark", false);
     }
+  }
+
+  Future<void> background_service(var today) async {
+    late List<Map<String, dynamic>> closetPrayerInfoList;
+
+    print("today is :" + today);
+    print(this.dayName);
+    if (this.dayName != today) {
+      print("new time fetched");
+      final now = DateTime.now();
+      final String formattedDate =
+          '${addLeadingZero(now.day)}-${addLeadingZero(now.month)}-${addLeadingZero(now.year)}';
+      await this.fetchPrayerTimings(formattedDate);
+    }
+    if (today == "Friday") {
+      var prayerTimes = [...this.prayerTimes];
+      prayerTimes.removeAt(2);
+      prayerTimes.insertAll(2, this.prayerTimes_Jumuah);
+      var prayerTimes_iqama = [...this.prayerTimes_iqama];
+      prayerTimes_iqama.removeAt(2);
+      prayerTimes_iqama.insertAll(2, this.prayerTimes_Jumuah);
+      print(prayerTimes);
+      closetPrayerInfoList = this.createPrayerInfoList(
+          prayerTimes, prayerTimes_iqama, this.getPrayerName_jumaha, 0);
+    } else {
+      closetPrayerInfoList = this.createPrayerInfoList(
+          this.prayerTimes, this.prayerTimes_iqama, this.getPrayerName, 0);
+    }
+
+    var ClosestPrayer = this.findClosestPrayerKey(closetPrayerInfoList);
+    ClosetKey = ClosestPrayer['key'];
+
+    time_difference_list =
+        this.getTimeDifference(closetPrayerInfoList, ClosetKey);
+
+    //var iqama_time = ClosestPrayer['iqamaTime'];
+
+    if (['Jumuah Fisrt Iqama', 'Jumuah Second Iqama', 'Jumuah Third Iqama']
+        .contains(ClosetKey)) {
+      silent_timer = 45;
+    } else {
+      silent_timer = 15;
+    }
+
+    print(ClosetKey);
+    print(silent_timer);
+    print(flag);
+    if (time_difference_list['iqamaTimeDifferenceInMinutes'] >= 0 &&
+        time_difference_list['iqamaTimeDifferenceInMinutes'] <= silent_timer &&
+        flag) {
+      print("checking");
+      is_silent = await this.checkLocation();
+      if (is_silent) {
+        flag = false;
+      }
+    } else if (time_difference_list['iqamaTimeDifferenceInMinutes'] >
+            silent_timer &&
+        flag == false) {
+      this.enable_sound();
+      flag = true;
+    }
+  }
+
+  Future<void> background_notification(
+    ServiceInstance service,
+    var today,
+    var now,
+  ) async {
+    var nextday = 0;
+    if (service is AndroidServiceInstance) {
+      if (await service.isForegroundService() && isNotification == true) {
+        if (now.hour > int.parse(this.prayerTimes[5].split(":")[0]) ||
+            (now.hour == int.parse(this.prayerTimes[5].split(":")[0]) &&
+                now.minute >= int.parse(this.prayerTimes[5].split(":")[1]))) {
+          nextday = 1;
+        } else {
+          nextday = 0;
+        }
+        var nextPrayerInfoList;
+        if (today == "Friday") {
+          var prayerTimes = [...this.prayerTimes];
+          prayerTimes.removeAt(2);
+          prayerTimes.insertAll(2, this.prayerTimes_Jumuah);
+          var prayerTimes_iqama = [...this.prayerTimes_iqama];
+          prayerTimes_iqama.removeAt(2);
+          prayerTimes_iqama.insertAll(2, this.prayerTimes_Jumuah);
+
+          nextPrayerInfoList = this.createPrayerInfoList(prayerTimes,
+              prayerTimes_iqama, this.getPrayerName_jumaha, nextday);
+        } else {
+          nextPrayerInfoList = this.createPrayerInfoList(this.prayerTimes,
+              this.prayerTimes_iqama, this.getPrayerName, nextday);
+        }
+
+        nextPrayerInfoList.forEach((prayerInfo) {
+          print('Prayer: ${prayerInfo['key']}, '
+              'Prayer Time: ${prayerInfo['prayerTime']}, '
+              'Iqama Time: ${prayerInfo['iqamaTime']}, '
+              'Time Difference: ${prayerInfo['timeDifference']} minutes');
+        });
+        var NextPrayer = this.findNextPrayerKey(nextPrayerInfoList);
+
+        String _content = "initial";
+        // try {
+        var status;
+
+        if (flag) {
+          status = "normal";
+        } else {
+          status = "silent";
+        }
+        print("next prayer ${NextPrayer}");
+
+        var next_prayer_key = NextPrayer!["key"];
+
+        var time_differences = await this.getTimeDifference_notification(
+            nextPrayerInfoList, next_prayer_key);
+
+        var fixed_string =
+            "${next_prayer_key} remains: ${time_differences['prayerTimeDifference']}";
+        if (time_difference_list['prayerTimeDifferenceInMinutes'] >= 0 &&
+            time_difference_list['iqamaTimeDifferenceInMinutes'] <= 0) {
+          _content =
+              "${fixed_string} \nthe $ClosetKey aqama after ${time_difference_list['iqamaTimeDifferenceInMinutes'].abs()}m\nand your phone will be silent \nif you within 100m";
+        } else if (time_difference_list['prayerTimeDifferenceInMinutes'] >= 0 &&
+            time_difference_list['iqamaTimeDifferenceInMinutes'] >= 0 &&
+            time_difference_list['iqamaTimeDifferenceInMinutes'] <
+                silent_timer) {
+          if (status == "silent") {
+            _content =
+                "${fixed_string}\nyour phone will be normal when $ClosetKey pray finishes after ${silent_timer - time_difference_list['iqamaTimeDifferenceInMinutes']}m";
+          } else {
+            _content =
+                "${fixed_string}\n$ClosetKey pray finishes after ${silent_timer - time_difference_list['iqamaTimeDifferenceInMinutes']}m ";
+          }
+        } else {
+          _content = fixed_string +
+              "\nand will be silent after ${time_differences['iqamaTimeDifference']}\nif you within 100m";
+        }
+        // } catch (e) {
+        //   print("here $e");
+        // }
+        print(_content);
+        flutterLocalNotificationsPlugin.show(
+          959,
+          'ICBC',
+          _content,
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'ICBC',
+              'ICBC SERVICE',
+              icon: 'yh',
+              ongoing: true,
+              importance: Importance.high,
+            ),
+          ),
+          payload: _content,
+        );
+      }
+    }
+  }
+
+  Future<void> debug_method() async {
+    final now = DateTime.now();
+    DateFormat dateFormat = DateFormat.EEEE();
+    var today = dateFormat.format(now);
+    late List<Map<String, dynamic>> closetPrayerInfoList;
+    var silent_timer = 15;
+    print("today is :" + today);
+    print(this.dayName);
+    if (this.dayName != today) {
+      print("new time fetched");
+      final now = DateTime.now();
+      final String formattedDate =
+          '${addLeadingZero(now.day)}-${addLeadingZero(now.month)}-${addLeadingZero(now.year)}';
+      await this.fetchPrayerTimings(formattedDate);
+    }
+    if (today == "Friday") {
+      var prayerTimes = [...this.prayerTimes];
+      prayerTimes.removeAt(2);
+      prayerTimes.insertAll(2, this.prayerTimes_Jumuah);
+      var prayerTimes_iqama = [...this.prayerTimes_iqama];
+      prayerTimes_iqama.removeAt(2);
+      prayerTimes_iqama.insertAll(2, this.prayerTimes_Jumuah);
+      print(prayerTimes);
+      closetPrayerInfoList = this.createPrayerInfoList(
+          prayerTimes, prayerTimes_iqama, this.getPrayerName_jumaha, 0);
+    } else {
+      closetPrayerInfoList = this.createPrayerInfoList(
+          this.prayerTimes, this.prayerTimes_iqama, this.getPrayerName, 0);
+    }
+
+    var ClosestPrayer = this.findClosestPrayerKey(closetPrayerInfoList);
+    var ClosetKey = ClosestPrayer['key'];
+
+    var time_difference_list =
+        this.getTimeDifference(closetPrayerInfoList, ClosetKey);
+
+    //var iqama_time = ClosestPrayer['iqamaTime'];
+
+    if (['Jumuah Fisrt Iqama', 'Jumuah Second Iqama', 'Jumuah Third Iqama']
+        .contains(ClosetKey)) {
+      silent_timer = 45;
+    } else {
+      silent_timer = 15;
+    }
+    var nextday = 0;
+
+    var min_distance = await this.getmindistance();
+    if (now.hour > int.parse(this.prayerTimes[5].split(":")[0]) ||
+        (now.hour == int.parse(this.prayerTimes[5].split(":")[0]) &&
+            now.minute >= int.parse(this.prayerTimes[5].split(":")[1]))) {
+      nextday = 1;
+    } else {
+      nextday = 0;
+    }
+    var nextPrayerInfoList;
+    if (today == "Friday") {
+      var prayerTimes = [...this.prayerTimes];
+      prayerTimes.removeAt(2);
+      prayerTimes.insertAll(2, this.prayerTimes_Jumuah);
+      var prayerTimes_iqama = [...this.prayerTimes_iqama];
+      prayerTimes_iqama.removeAt(2);
+      prayerTimes_iqama.insertAll(2, this.prayerTimes_Jumuah);
+
+      nextPrayerInfoList = this.createPrayerInfoList(
+          prayerTimes, prayerTimes_iqama, this.getPrayerName_jumaha, nextday);
+    } else {
+      nextPrayerInfoList = this.createPrayerInfoList(this.prayerTimes,
+          this.prayerTimes_iqama, this.getPrayerName, nextday);
+    }
+
+    nextPrayerInfoList.forEach((prayerInfo) {
+      print('Prayer: ${prayerInfo['key']}, '
+          'Prayer Time: ${prayerInfo['prayerTime']}, '
+          'Iqama Time: ${prayerInfo['iqamaTime']}, '
+          'Time Difference: ${prayerInfo['timeDifference']} minutes');
+    });
+    var NextPrayer = this.findNextPrayerKey(nextPrayerInfoList);
+
+    String _content = "initial";
+    try {
+      var status;
+
+      if (flag) {
+        status = "normal";
+      } else {
+        status = "silent";
+      }
+      print("next prayer ${NextPrayer}");
+
+      var next_prayer_key = NextPrayer!["key"];
+      var time_differences = await this
+          .getTimeDifference_notification(nextPrayerInfoList, next_prayer_key);
+      var fixed_string =
+          "${next_prayer_key} remains: ${time_differences['prayerTimeDifference']}\nyor distance from ICBC ${min_distance}m\nthe phone now is $status  ";
+      if (time_difference_list['prayerTimeDifferenceInMinutes'] >= 0 &&
+          time_difference_list['iqamaTimeDifferenceInMinutes'] <= 0) {
+        _content =
+            "${fixed_string} \nthe $ClosetKey aqama after ${time_difference_list['iqamaTimeDifferenceInMinutes'].abs()}m\nand your phone will be silent \nif you within 100m";
+      } else if (time_difference_list['prayerTimeDifferenceInMinutes'] >= 0 &&
+          time_difference_list['iqamaTimeDifferenceInMinutes'] >= 0 &&
+          time_difference_list['iqamaTimeDifferenceInMinutes'] < silent_timer) {
+        if (status == "silent") {
+          _content =
+              "${fixed_string}\nyour phone will be normal when $ClosetKey pray finishes after ${silent_timer - time_difference_list['iqamaTimeDifferenceInMinutes']}m";
+        } else {
+          _content =
+              "${fixed_string}\n$ClosetKey pray finishes after ${silent_timer - time_difference_list['iqamaTimeDifferenceInMinutes']}m ";
+        }
+      } else {
+        _content = fixed_string +
+            "and will be silent after ${time_differences['iqamaTimeDifference']}\nif you within 100m";
+      }
+    } catch (e) {
+      print("here $e");
+    }
+    print("Debug methods:\n" + _content);
   }
 
   Future<void> unread_notification() async {
@@ -632,9 +750,6 @@ class MainController extends GetxController {
       importance: Importance.low, // importance must be at low or higher level
     );
 
-    final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-        FlutterLocalNotificationsPlugin();
-
     if (Platform.isAndroid) {
       await flutterLocalNotificationsPlugin.initialize(
           const InitializationSettings(
@@ -672,11 +787,12 @@ class MainController extends GetxController {
 
         // auto start service
         autoStart: false,
+        autoStartOnBoot: false,
         isForegroundMode: true,
 
         notificationChannelId: 'ICBC',
         initialNotificationTitle: 'ICBC',
-        initialNotificationContent: '',
+        initialNotificationContent: 'Service is Running',
         foregroundServiceNotificationId: 959,
       ),
       iosConfiguration: IosConfiguration(
@@ -1261,8 +1377,8 @@ class MainController extends GetxController {
     };
   }
 
-  Map<String, dynamic> getTimeDifference_notification(
-      List<Map<String, dynamic>> prayerInfoList, String key) {
+  Future<Map<String, dynamic>> getTimeDifference_notification(
+      List<Map<String, dynamic>> prayerInfoList, String key) async {
     // Find the prayer time info for the given key
     Map<String, dynamic> timeInfo = prayerInfoList.firstWhere(
         (element) => element['key'] == key,
@@ -1282,7 +1398,8 @@ class MainController extends GetxController {
     // Format difference in "hh:mm"
     String formattedPrayerTimeDifference = formatTime(prayerTimeDifference);
     String formattedIqamaTimeDifference = formatTime(iqamaTimeDifference);
-
+    print("now i will return to function\n" +
+        "$formattedPrayerTimeDifference $formattedIqamaTimeDifference ");
     return {
       'prayerTimeDifference': formattedPrayerTimeDifference,
       'iqamaTimeDifference': formattedIqamaTimeDifference,
@@ -1299,6 +1416,7 @@ class MainController extends GetxController {
 
   String reverseDateFormat(String dateString) {
     final parts = dateString.split('-');
+
     return '${parts[2]}-${parts[1]}-${parts[0]}';
   }
 }
