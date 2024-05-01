@@ -8,6 +8,7 @@ import 'package:sametsalah/controllers/home_controller.dart';
 import 'package:sametsalah/main.dart';
 import 'package:sametsalah/views/aboutuspage.dart';
 import 'package:sametsalah/views/contactuspage.dart';
+import 'package:sametsalah/views/debugpage.dart';
 import 'package:sametsalah/views/loginpage.dart';
 import 'package:sametsalah/views/notificationpage.dart';
 import 'package:sametsalah/views/settingspage.dart';
@@ -367,6 +368,14 @@ class _MyAppState extends State<MyApp> {
                       width: 27,
                       height: 27,
                     ),
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
+                    Get.to(Debugpage());
+                  },
+                  child: ListTile(
+                    title: Text("Debug"),
                   ),
                 ),
               ],
